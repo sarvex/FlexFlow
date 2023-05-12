@@ -41,21 +41,17 @@ top_level = threading.local()
 def input_args(filter_runtime_options=False):
   raw_args = c.legion_runtime_get_input_args()
 
-  args = []
-  for i in range(raw_args.argc):
-    args.append(ffi.string(raw_args.argv[i]).decode('utf-8'))
-
+  args = [
+      ffi.string(raw_args.argv[i]).decode('utf-8')
+      for i in range(raw_args.argc)
+  ]
   if filter_runtime_options:
     i = 1 # Skip program name
 
     prefixes = ['-lg:', '-hl:', '-realm:', '-ll:', '-cuda:', '-numa:',
                 '-dm:', '-bishop:']
     while i < len(args):
-      match = False
-      for prefix in prefixes:
-        if args[i].startswith(prefix):
-          match = True
-          break
+      match = any(args[i].startswith(prefix) for prefix in prefixes)
       if args[i] == '-level':
         match = True
       if args[i] == '-logfile':

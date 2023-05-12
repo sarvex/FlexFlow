@@ -21,12 +21,10 @@ from .backend_functions import batch_dot, sin, cos, exp, pow, sum
 # Default backend: FlexFlow.
 _BACKEND = 'flexflow'
 
-# import backend
-if _BACKEND == 'flexflow':
-    sys.stderr.write('Using flexflow backend.\n')
-    from .flexflow_backend import *
-else:
-    raise ValueError('Unknown backend: ' + str(_BACKEND))
+if _BACKEND != 'flexflow':
+    raise ValueError(f'Unknown backend: {_BACKEND}')
+sys.stderr.write('Using flexflow backend.\n')
+from .flexflow_backend import *
 
 
 def backend():

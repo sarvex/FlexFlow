@@ -6,11 +6,10 @@ class NodePrinter:
 
     def to_string(self):
         ptr = self.val["ptr"]
-        if ptr != 0:
-            op_type = ptr.referenced_value()['op_type']
-            return f'Node<guid={self.val["guid"]} ptr={ptr} op_type={op_type}>'
-        else:
+        if ptr == 0:
             return f'Node<guid={self.val["guid"]} ptr={self.val["ptr"]}>'
+        op_type = ptr.referenced_value()['op_type']
+        return f'Node<guid={self.val["guid"]} ptr={ptr} op_type={op_type}>'
 
 class EdgePrinter:
     def __init__(self, val):
@@ -69,8 +68,7 @@ class ParallelTensorBasePrinter:
         self.val = val
     
     def to_string(self):
-        toks = []
-        toks.append(f'guid={self.val["parallel_tensor_guid"]}')
+        toks = [f'guid={self.val["parallel_tensor_guid"]}']
         ndim = self.val['num_dims']
         for i in range(ndim):
             dim = self.val['dims'][i]

@@ -251,11 +251,9 @@ class LinearNode(ModuleNode):
         self.assert_num_args(1, Comparator.EQ)
 
     def parse(self):
-        s = [self.name]
-        s.append(self.parse_inoutnodes(self.innodes))
+        s = [self.name, self.parse_inoutnodes(self.innodes)]
         s.append(self.parse_inoutnodes(self.outnodes))
-        s.append(enum_to_str(OpType, self.op_type))
-        s.append(str(self.module.out_features))
+        s.extend((enum_to_str(OpType, self.op_type), str(self.module.out_features)))
         s.append(str(enum_to_int(ActiMode, ActiMode.AC_MODE_NONE)))
         if self.module.bias is not None:
             s.append("1")
@@ -299,19 +297,26 @@ class Conv2dNode(ModuleNode):
         self.assert_num_args(1, Comparator.EQ)
 
     def parse(self):
-        s = [self.name]
-        s.append(self.parse_inoutnodes(self.innodes))
+        s = [self.name, self.parse_inoutnodes(self.innodes)]
         s.append(self.parse_inoutnodes(self.outnodes))
-        s.append(enum_to_str(OpType, self.op_type))
-        s.append(str(self.module.out_channels))
-        s.append(str(self.module.kernel_size[0]))
-        s.append(str(self.module.kernel_size[1]))
-        s.append(str(self.module.stride[0]))
-        s.append(str(self.module.stride[1]))
-        s.append(str(self.module.padding[0]))
-        s.append(str(self.module.padding[1]))
-        s.append(str(enum_to_int(ActiMode, ActiMode.AC_MODE_NONE)))
-        s.append(str(self.module.groups))
+        s.extend(
+            (
+                enum_to_str(OpType, self.op_type),
+                str(self.module.out_channels),
+                str(self.module.kernel_size[0]),
+                str(self.module.kernel_size[1]),
+                str(self.module.stride[0]),
+                str(self.module.stride[1]),
+                str(self.module.padding[0]),
+                str(self.module.padding[1]),
+            )
+        )
+        s.extend(
+            (
+                str(enum_to_int(ActiMode, ActiMode.AC_MODE_NONE)),
+                str(self.module.groups),
+            )
+        )
         if self.module.bias is not None:
             s.append("1")
         else:
@@ -370,14 +375,16 @@ class Pool2dNode(ModuleNode):
         self.assert_num_args(1, Comparator.EQ)
 
     def parse(self):
-        s = [self.name]
-        s.append(self.parse_inoutnodes(self.innodes))
+        s = [self.name, self.parse_inoutnodes(self.innodes)]
         s.append(self.parse_inoutnodes(self.outnodes))
-        s.append(enum_to_str(OpType, self.op_type))
-        # FIXME MaxPool2d supports ceil_mode
-        s.append(str(self.module.kernel_size))
-        s.append(str(self.module.stride))
-        s.append(str(self.module.padding))
+        s.extend(
+            (
+                enum_to_str(OpType, self.op_type),
+                str(self.module.kernel_size),
+                str(self.module.stride),
+                str(self.module.padding),
+            )
+        )
         s.append(str(enum_to_int(PoolType, self.pool_type)))
         s.append(str(enum_to_int(ActiMode, ActiMode.AC_MODE_NONE)))
         self._ir_string = IR_DELIMITER.join(s)
@@ -427,14 +434,17 @@ class AdaptivePool2dNode(ModuleNode):
         self.assert_num_args(1, Comparator.EQ)
 
     def parse(self):
-        s = [self.name]
-        s.append(self.parse_inoutnodes(self.innodes))
+        s = [self.name, self.parse_inoutnodes(self.innodes)]
         s.append(self.parse_inoutnodes(self.outnodes))
         s.append(enum_to_str(OpType, self.op_type))
         # FIXME Fix kernel, stride, and padding
         s += ["3", "1", "0"]
-        s.append(str(enum_to_int(PoolType, self.pool_type)))
-        s.append(str(enum_to_int(ActiMode, ActiMode.AC_MODE_NONE)))
+        s.extend(
+            (
+                str(enum_to_int(PoolType, self.pool_type)),
+                str(enum_to_int(ActiMode, ActiMode.AC_MODE_NONE)),
+            )
+        )
         self._ir_string = IR_DELIMITER.join(s)
 
     @staticmethod
@@ -452,8 +462,7 @@ class BatchNorm2dNode(ModuleNode):
         self.assert_num_args(1, Comparator.EQ)
 
     def parse(self):
-        s = [self.name]
-        s.append(self.parse_inoutnodes(self.innodes))
+        s = [self.name, self.parse_inoutnodes(self.innodes)]
         s.append(self.parse_inoutnodes(self.outnodes))
         s.append(enum_to_str(OpType, self.op_type))
         self._ir_string = IR_DELIMITER.join(s)
@@ -480,8 +489,7 @@ class SoftmaxMNode(ModuleNode):
         self.assert_num_args(1, Comparator.EQ)
 
     def parse(self):
-        s = [self.name]
-        s.append(self.parse_inoutnodes(self.innodes))
+        s = [self.name, self.parse_inoutnodes(self.innodes)]
         s.append(self.parse_inoutnodes(self.outnodes))
         s.append(enum_to_str(OpType, self.op_type))
         self._ir_string = IR_DELIMITER.join(s)
@@ -507,11 +515,9 @@ class DropoutMNode(ModuleNode):
         self.assert_num_args(1, Comparator.EQ)
 
     def parse(self):
-        s = [self.name]
-        s.append(self.parse_inoutnodes(self.innodes))
+        s = [self.name, self.parse_inoutnodes(self.innodes)]
         s.append(self.parse_inoutnodes(self.outnodes))
-        s.append(enum_to_str(OpType, self.op_type))
-        s.append(str(self.module.p))
+        s.extend((enum_to_str(OpType, self.op_type), str(self.module.p)))
         self._ir_string = IR_DELIMITER.join(s)
 
     @staticmethod
@@ -539,8 +545,7 @@ class FlattenMNode(ModuleNode):
         self.assert_num_args(1, Comparator.EQ)
 
     def parse(self):
-        s = [self.name]
-        s.append(self.parse_inoutnodes(self.innodes))
+        s = [self.name, self.parse_inoutnodes(self.innodes)]
         s.append(self.parse_inoutnodes(self.outnodes))
         s.append(enum_to_str(OpType, self.op_type))
         self._ir_string = IR_DELIMITER.join(s)
@@ -564,8 +569,7 @@ class ReLUMNode(ModuleNode):
         self.assert_num_args(1, Comparator.EQ)
 
     def parse(self):
-        s = [self.name]
-        s.append(self.parse_inoutnodes(self.innodes))
+        s = [self.name, self.parse_inoutnodes(self.innodes)]
         s.append(self.parse_inoutnodes(self.outnodes))
         s.append(enum_to_str(OpType, self.op_type))
         self._ir_string = IR_DELIMITER.join(s)
@@ -589,8 +593,7 @@ class IdentityNode(ModuleNode):
         self.assert_num_args(1, Comparator.EQ)
 
     def parse(self):
-        s = [self.name]
-        s.append(self.parse_inoutnodes(self.innodes))
+        s = [self.name, self.parse_inoutnodes(self.innodes)]
         s.append(self.parse_inoutnodes(self.outnodes))
         s.append(enum_to_str(OpType, self.op_type))
         self._ir_string = IR_DELIMITER.join(s)
@@ -617,8 +620,7 @@ class GeluMNode(ModuleNode):
         self.assert_num_args(1, Comparator.EQ)
 
     def parse(self):
-        s = [self.name]
-        s.append(self.parse_inoutnodes(self.innodes))
+        s = [self.name, self.parse_inoutnodes(self.innodes)]
         s.append(self.parse_inoutnodes(self.outnodes))
         s.append(enum_to_str(OpType, self.op_type))
         self._ir_string = IR_DELIMITER.join(s)
@@ -642,8 +644,7 @@ class LayerNormNode(ModuleNode):
         self.assert_num_args(1, Comparator.EQ)
 
     def parse(self):
-        s = [self.name]
-        s.append(self.parse_inoutnodes(self.innodes))
+        s = [self.name, self.parse_inoutnodes(self.innodes)]
         s.append(self.parse_inoutnodes(self.outnodes))
         s.append(enum_to_str(OpType, self.op_type))
         self._ir_string = IR_DELIMITER.join(s)
@@ -694,8 +695,7 @@ class T5LayerNormNode(Node):
         self.op_type = OpType.LAYER_NORM
 
     def parse(self):
-        s = [self.name]
-        s.append(self.parse_inoutnodes(self.innodes))
+        s = [self.name, self.parse_inoutnodes(self.innodes)]
         s.append(self.parse_inoutnodes(self.outnodes))
         s.append(enum_to_str(OpType, self.op_type))
         self._ir_string = IR_DELIMITER.join(s)
@@ -735,8 +735,7 @@ class SigmoidNode(ModuleNode):
         self.assert_num_args(1, Comparator.EQ)
 
     def parse(self):
-        s = [self.name]
-        s.append(self.parse_inoutnodes(self.innodes))
+        s = [self.name, self.parse_inoutnodes(self.innodes)]
         s.append(self.parse_inoutnodes(self.outnodes))
         s.append(enum_to_str(OpType, self.op_type))
         self._ir_string = IR_DELIMITER.join(s)
@@ -763,8 +762,7 @@ class TanhMNode(ModuleNode):
         self.assert_num_args(1, Comparator.EQ)
 
     def parse(self):
-        s = [self.name]
-        s.append(self.parse_inoutnodes(self.innodes))
+        s = [self.name, self.parse_inoutnodes(self.innodes)]
         s.append(self.parse_inoutnodes(self.outnodes))
         s.append(enum_to_str(OpType, self.op_type))
         self._ir_string = IR_DELIMITER.join(s)
@@ -788,8 +786,7 @@ class ELUNode(ModuleNode):
         self.assert_num_args(1, Comparator.EQ)
 
     def parse(self):
-        s = [self.name]
-        s.append(self.parse_inoutnodes(self.innodes))
+        s = [self.name, self.parse_inoutnodes(self.innodes)]
         s.append(self.parse_inoutnodes(self.outnodes))
         s.append(enum_to_str(OpType, self.op_type))
         self._ir_string = IR_DELIMITER.join(s)
@@ -813,12 +810,15 @@ class EmbeddingNode(ModuleNode):
         self.assert_num_args(1, Comparator.EQ)
 
     def parse(self):
-        s = [self.name]
-        s.append(self.parse_inoutnodes(self.innodes))
+        s = [self.name, self.parse_inoutnodes(self.innodes)]
         s.append(self.parse_inoutnodes(self.outnodes))
-        s.append(enum_to_str(OpType, self.op_type))
-        s.append(str(self.module.num_embeddings))
-        s.append(str(self.module.embedding_dim))
+        s.extend(
+            (
+                enum_to_str(OpType, self.op_type),
+                str(self.module.num_embeddings),
+                str(self.module.embedding_dim),
+            )
+        )
         self._ir_string = IR_DELIMITER.join(s)
 
     @staticmethod
@@ -1097,17 +1097,21 @@ class ScalarAddNode(FunctionNode):
         self.scalar_pos = scalar_pos
 
     def parse(self):
-        s = [self.name]
         if self.scalar_pos == FunctionNode.ScalarPosition.RIGHT:
             innodes = (self.innodes[0],)
             scalar = self.innodes[1]
         elif self.scalar_pos == FunctionNode.ScalarPosition.LEFT:
             innodes = (self.innodes[1],)
             scalar = self.innodes[0]
-        s.append(self.parse_inoutnodes(innodes))
-        s.append(self.parse_inoutnodes(self.outnodes))
-        s.append(enum_to_str(OpType, self.op_type))
-        s.append(str(scalar))
+        s = [
+            self.name,
+            *(
+                self.parse_inoutnodes(innodes),
+                self.parse_inoutnodes(self.outnodes),
+                enum_to_str(OpType, self.op_type),
+                str(scalar),
+            ),
+        ]
         self._ir_string = IR_DELIMITER.join(s)
 
     @staticmethod
@@ -1135,8 +1139,7 @@ class AddNode(FunctionNode):
         self.assert_num_args(2, Comparator.EQ)
 
     def parse(self):
-        s = [self.name]
-        s.append(self.parse_inoutnodes(self.innodes))
+        s = [self.name, self.parse_inoutnodes(self.innodes)]
         s.append(self.parse_inoutnodes(self.outnodes))
         s.append(enum_to_str(OpType, self.op_type))
         self._ir_string = IR_DELIMITER.join(s)
@@ -1154,8 +1157,7 @@ class AddNode(FunctionNode):
     def to_ff(self, ffmodel, node_to_output):
         input_tensor1 = node_to_output[self.innodes[0].name]
         input_tensor2 = node_to_output[self.innodes[1].name]
-        res = ffmodel.add(x=input_tensor1, y=input_tensor2, name=self.name)
-        return res
+        return ffmodel.add(x=input_tensor1, y=input_tensor2, name=self.name)
 
 
 class ScalarSubNode(FunctionNode):
@@ -1166,17 +1168,21 @@ class ScalarSubNode(FunctionNode):
         self.scalar_pos = scalar_pos
 
     def parse(self):
-        s = [self.name]
         if self.scalar_pos == FunctionNode.ScalarPosition.RIGHT:
             innodes = (self.innodes[0],)
             scalar = self.innodes[1]
         elif self.scalar_pos == FunctionNode.ScalarPosition.LEFT:
             innodes = (self.innodes[1],)
             scalar = self.innodes[0]
-        s.append(self.parse_inoutnodes(innodes))
-        s.append(self.parse_inoutnodes(self.outnodes))
-        s.append(enum_to_str(OpType, self.op_type))
-        s.append(str(scalar))
+        s = [
+            self.name,
+            *(
+                self.parse_inoutnodes(innodes),
+                self.parse_inoutnodes(self.outnodes),
+                enum_to_str(OpType, self.op_type),
+                str(scalar),
+            ),
+        ]
         self._ir_string = IR_DELIMITER.join(s)
 
     @staticmethod
@@ -1204,13 +1210,17 @@ class ScalarTrueDivNode(FunctionNode):
         self.assert_num_args(2, Comparator.EQ)
 
     def parse(self):
-        s = [self.name]
         innodes = (self.innodes[0],)
         scalar = self.innodes[1]
-        s.append(self.parse_inoutnodes(innodes))
-        s.append(self.parse_inoutnodes(self.outnodes))
-        s.append(enum_to_str(OpType, self.op_type))
-        s.append(str(scalar))
+        s = [
+            self.name,
+            *(
+                self.parse_inoutnodes(innodes),
+                self.parse_inoutnodes(self.outnodes),
+                enum_to_str(OpType, self.op_type),
+                str(scalar),
+            ),
+        ]
         self._ir_string = IR_DELIMITER.join(s)
 
     @staticmethod
@@ -1240,11 +1250,15 @@ class ConcatNode(FunctionNode):
         self.assert_num_args(2, Comparator.GEQ)
 
     def parse(self):
-        s = [self.name]
         innodes = self.innodes[0]
-        s.append(self.parse_inoutnodes(innodes))
-        s.append(self.parse_inoutnodes(self.outnodes))
-        s.append(enum_to_str(OpType, self.op_type))
+        s = [
+            self.name,
+            *(
+                self.parse_inoutnodes(innodes),
+                self.parse_inoutnodes(self.outnodes),
+                enum_to_str(OpType, self.op_type),
+            ),
+        ]
         if len(self.innodes) == 1:
             s.append("1")
         else:
@@ -1255,18 +1269,18 @@ class ConcatNode(FunctionNode):
     def string_to_ff(string, ffmodel, node_to_output):
         data = Node.StringData(string)
         name = data.name
-        input_tensors = []
-        for i in range(len(data.innodes)):
-            input_tensors.append(node_to_output[data.innodes[i]])
+        input_tensors = [
+            node_to_output[data.innodes[i]] for i in range(len(data.innodes))
+        ]
         axis = int(data.items[4])
         return ffmodel.concat(
             tensors=input_tensors, axis=axis, name=name,
         )
 
     def to_ff(self, ffmodel, node_to_output):
-        input_tensors = []
-        for input_node in self.innodes[0]:
-            input_tensors.append(node_to_output[input_node.name])
+        input_tensors = [
+            node_to_output[input_node.name] for input_node in self.innodes[0]
+        ]
         axis = 1 if len(self.innodes) == 1 else self.innodes[1]
         assert type(axis) is int
         return ffmodel.concat(
@@ -1282,12 +1296,16 @@ class SplitNode(FunctionNode):
         self.assert_num_args(2, Comparator.EQ)
 
     def parse(self):
-        s = [self.name]
         innodes = (self.innodes[0],)
-        s.append(self.parse_inoutnodes(innodes))
-        s.append(self.parse_inoutnodes(self.outnodes))
-        s.append(enum_to_str(OpType, self.op_type))
-        s.append(str(self.innodes[1]))
+        s = [
+            self.name,
+            *(
+                self.parse_inoutnodes(innodes),
+                self.parse_inoutnodes(self.outnodes),
+                enum_to_str(OpType, self.op_type),
+                str(self.innodes[1]),
+            ),
+        ]
         self._ir_string = IR_DELIMITER.join(s)
 
     @staticmethod
@@ -1318,11 +1336,15 @@ class FlattenFNode(FunctionNode):
         self.assert_num_args(2, Comparator.EQ)
 
     def parse(self):
-        s = [self.name]
         innodes = (self.innodes[0],)
-        s.append(self.parse_inoutnodes(innodes))
-        s.append(self.parse_inoutnodes(self.outnodes))
-        s.append(enum_to_str(OpType, self.op_type))
+        s = [
+            self.name,
+            *(
+                self.parse_inoutnodes(innodes),
+                self.parse_inoutnodes(self.outnodes),
+                enum_to_str(OpType, self.op_type),
+            ),
+        ]
         self._ir_string = IR_DELIMITER.join(s)
 
     @staticmethod
@@ -1341,8 +1363,7 @@ class ReLUFNode(FunctionNode):
         self.assert_num_args(1, Comparator.EQ)
 
     def parse(self):
-        s = [self.name]
-        s.append(self.parse_inoutnodes(self.innodes))
+        s = [self.name, self.parse_inoutnodes(self.innodes)]
         s.append(self.parse_inoutnodes(self.outnodes))
         s.append(enum_to_str(OpType, self.op_type))
         self._ir_string = IR_DELIMITER.join(s)
@@ -1363,17 +1384,20 @@ class GetItemNode(FunctionNode):
         self.assert_num_args(2, Comparator.EQ)
 
     def parse(self):
-        s = [self.name]
         innodes = (self.innodes[0],)
-        s.append(self.parse_inoutnodes(innodes))
-        s.append(self.parse_inoutnodes(self.outnodes))
-        s.append(enum_to_str(OpType, self.op_type))
+        s = [
+            self.name,
+            *(
+                self.parse_inoutnodes(innodes),
+                self.parse_inoutnodes(self.outnodes),
+                enum_to_str(OpType, self.op_type),
+            ),
+        ]
         if type(self.innodes[1]) is int:
             s.append(str(self.innodes[1]))
         else:
             # Append each slice separately
-            for sl in self.innodes[1]:
-                s.append(str(sl))
+            s.extend(str(sl) for sl in self.innodes[1])
         self._ir_string = IR_DELIMITER.join(s)
 
     @staticmethod
@@ -1420,11 +1444,11 @@ class GetItemNode(FunctionNode):
             return slice_elem is None
 
         def is_truncate(slice_elem, old_size):
-            start = 0 if slice_elem.start == None else slice_elem.start
-            stop = old_size if slice_elem.stop == None else slice_elem.stop
+            start = 0 if slice_elem.start is None else slice_elem.start
+            stop = old_size if slice_elem.stop is None else slice_elem.stop
             new_size = stop - start
             return new_size < old_size
-        
+
         def is_single_element(slice_elem):
             return isinstance(slice_elem, int)
 
@@ -1458,8 +1482,8 @@ class GetItemNode(FunctionNode):
                 j -= 1
             elif is_truncate(slice_elem, shape[j]):
                 assert j >= 0
-                start = 0 if slice_elem.start == None else slice_elem.start
-                stop = shape[j] if slice_elem.stop == None else slice_elem.stop
+                start = 0 if slice_elem.start is None else slice_elem.start
+                stop = shape[j] if slice_elem.stop is None else slice_elem.stop
                 splits = []
                 # create splits    
                 if start > 0 and stop == shape[j]: # truncation from left
@@ -1531,8 +1555,7 @@ class BatchMatMulNode(FunctionNode):
         self.assert_num_args(2, Comparator.EQ)
 
     def parse(self):
-        s = [self.name]
-        s.append(self.parse_inoutnodes(self.innodes))
+        s = [self.name, self.parse_inoutnodes(self.innodes)]
         s.append(self.parse_inoutnodes(self.outnodes))
         s.append(enum_to_str(OpType, self.op_type))
         self._ir_string = IR_DELIMITER.join(s)
@@ -1563,17 +1586,21 @@ class ScalarMulNode(FunctionNode):
         self.scalar_pos = scalar_pos
 
     def parse(self):
-        s = [self.name]
         if self.scalar_pos == FunctionNode.ScalarPosition.RIGHT:
             innodes = (self.innodes[0],)
             scalar = self.innodes[1]
         elif self.scalar_pos == FunctionNode.ScalarPosition.LEFT:
             innodes = (self.innodes[1],)
             scalar = self.innodes[0]
-        s.append(self.parse_inoutnodes(innodes))
-        s.append(self.parse_inoutnodes(self.outnodes))
-        s.append(enum_to_str(OpType, self.op_type))
-        s.append(str(scalar))
+        s = [
+            self.name,
+            *(
+                self.parse_inoutnodes(innodes),
+                self.parse_inoutnodes(self.outnodes),
+                enum_to_str(OpType, self.op_type),
+                str(scalar),
+            ),
+        ]
         self._ir_string = IR_DELIMITER.join(s)
 
     @staticmethod
@@ -1601,8 +1628,7 @@ class MulNode(FunctionNode):
         self.assert_num_args(2, Comparator.EQ)
 
     def parse(self):
-        s = [self.name]
-        s.append(self.parse_inoutnodes(self.innodes))
+        s = [self.name, self.parse_inoutnodes(self.innodes)]
         s.append(self.parse_inoutnodes(self.outnodes))
         s.append(enum_to_str(OpType, self.op_type))
         self._ir_string = IR_DELIMITER.join(s)
@@ -1632,12 +1658,16 @@ class GetAttrNode(FunctionNode):
         self.assert_num_args(2, Comparator.EQ)
 
     def parse(self):
-        s = [self.name]
         innodes = (self.innodes[0],)
-        s.append(self.parse_inoutnodes(innodes))
-        s.append(self.parse_inoutnodes(self.outnodes))
-        s.append(enum_to_str(OpType, self.op_type))
-        s.append(str(self.innodes[1]))
+        s = [
+            self.name,
+            *(
+                self.parse_inoutnodes(innodes),
+                self.parse_inoutnodes(self.outnodes),
+                enum_to_str(OpType, self.op_type),
+                str(self.innodes[1]),
+            ),
+        ]
         self._ir_string = IR_DELIMITER.join(s)
 
     @staticmethod
@@ -1645,18 +1675,12 @@ class GetAttrNode(FunctionNode):
         data = Node.StringData(string)
         input_tensor = node_to_output[data.innodes[0]]
         attr = data.items[4]
-        if attr == "shape":
-            return input_tensor.dims
-        else:
-            return getattr(input_tensor, attr)
+        return input_tensor.dims if attr == "shape" else getattr(input_tensor, attr)
 
     def to_ff(self, ffmodel, node_to_output):
         input_tensor = node_to_output[self.innodes[0].name]
         attr = self.innodes[1]
-        if attr == "shape":
-            return input_tensor.dims
-        else:
-            return getattr(input_tensor, attr)
+        return input_tensor.dims if attr == "shape" else getattr(input_tensor, attr)
 
 
 class TransposeNode(FunctionNode):
@@ -1666,13 +1690,17 @@ class TransposeNode(FunctionNode):
         self.assert_num_args(3, Comparator.EQ)
 
     def parse(self):
-        s = [self.name]
         innodes = (self.innodes[0],)
-        s.append(self.parse_inoutnodes(innodes))
-        s.append(self.parse_inoutnodes(self.outnodes))
-        s.append(enum_to_str(OpType, self.op_type))
-        s.append(str(self.innodes[1]))
-        s.append(str(self.innodes[2]))
+        s = [
+            self.name,
+            *(
+                self.parse_inoutnodes(innodes),
+                self.parse_inoutnodes(self.outnodes),
+                enum_to_str(OpType, self.op_type),
+                str(self.innodes[1]),
+                str(self.innodes[2]),
+            ),
+        ]
         self._ir_string = IR_DELIMITER.join(s)
 
     @staticmethod
@@ -1706,11 +1734,15 @@ class ExpandNode(FunctionNode):
         self.assert_num_args(1, Comparator.GEQ)
 
     def parse(self):
-        s = [self.name]
         innodes = (self.innodes[0],)
-        s.append(self.parse_inoutnodes(innodes))
-        s.append(self.parse_inoutnodes(self.outnodes))
-        s.append(enum_to_str(OpType, self.op_type))
+        s = [
+            self.name,
+            *(
+                self.parse_inoutnodes(innodes),
+                self.parse_inoutnodes(self.outnodes),
+                enum_to_str(OpType, self.op_type),
+            ),
+        ]
         args = self.innodes[1:]
         expand_as = type(args[-1]) is not int
         if expand_as:
@@ -1720,8 +1752,7 @@ class ExpandNode(FunctionNode):
                 tensors.append(other.name)
             s.append(','.join(tensors) + ',')
         else:
-            for dim in args:
-                s.append(str(dim))
+            s.extend(str(dim) for dim in args)
         self._ir_string = IR_DELIMITER.join(s)
 
     @staticmethod
@@ -1754,10 +1785,14 @@ class ScalarFloorDivNode(FunctionNode):
         if type(scalar) is not int or type(scalar) is not float:
             assert 0, "FlexFlow does not support tensor floor division"
         innodes = (self.innodes[0],)
-        s.append(self.parse_inoutnodes(innodes))
-        s.append(self.parse_inoutnodes(self.outnodes))
-        s.append(enum_to_str(OpType, self.op_type))
-        s.append(str(scalar))
+        s.extend(
+            (
+                self.parse_inoutnodes(innodes),
+                self.parse_inoutnodes(self.outnodes),
+                enum_to_str(OpType, self.op_type),
+                str(scalar),
+            )
+        )
         self._ir_string = IR_DELIMITER.join(s)
 
     @staticmethod
@@ -1787,18 +1822,18 @@ class ReshapeNode(FunctionNode):
         self.assert_num_args(2, Comparator.GEQ)
 
     def parse(self):
-        s = [self.name]
         innodes = (self.innodes[0],)
-        s.append(self.parse_inoutnodes(innodes))
-        s.append(self.parse_inoutnodes(self.outnodes))
-        s.append(enum_to_str(OpType, self.op_type))
-        if len(self.innodes) == 2:
-            shape = self.innodes[1]
-        else:
-            shape = self.innodes[1:]
+        s = [
+            self.name,
+            *(
+                self.parse_inoutnodes(innodes),
+                self.parse_inoutnodes(self.outnodes),
+                enum_to_str(OpType, self.op_type),
+            ),
+        ]
+        shape = self.innodes[1] if len(self.innodes) == 2 else self.innodes[1:]
         if type(shape[-1]) is int:
-            for dim in shape:
-                s.append(str(dim))
+            s.extend(str(dim) for dim in shape)
         else:
             tensors = []
             for other in shape:
@@ -1812,13 +1847,10 @@ class ReshapeNode(FunctionNode):
         data = Node.StringData(string)
         name = data.name
         input_tensor = node_to_output[data.innodes[0]]
-        reshape_as = len(data.innodes) == 2 and data.innodes[1].isdigit()
-        if not reshape_as:
-            shape = []
-            for dim_size in data.items[4:]:
-                shape.append(int(dim_size))
-        else:
+        if reshape_as := len(data.innodes) == 2 and data.innodes[1].isdigit():
             shape = node_to_output[data.innodes[1]].dims
+        else:
+            shape = [int(dim_size) for dim_size in data.items[4:]]
         for dim in shape:
             assert type(dim) is int
         return ffmodel.reshape(input=input_tensor, shape=shape, name=name)
@@ -1844,15 +1876,18 @@ class PermuteNode(FunctionNode):
         self.assert_num_args(1, Comparator.GEQ)
 
     def parse(self):
-        s = [self.name]
         innodes = (self.innodes[0],)
-        s.append(self.parse_inoutnodes(innodes))
-        s.append(self.parse_inoutnodes(self.outnodes))
-        s.append(enum_to_str(OpType, self.op_type))
+        s = [
+            self.name,
+            *(
+                self.parse_inoutnodes(innodes),
+                self.parse_inoutnodes(self.outnodes),
+                enum_to_str(OpType, self.op_type),
+            ),
+        ]
         dims_as_list = isinstance(self.innodes[1], list)
         dims = self.innodes[1] if dims_as_list else self.innodes[1:]
-        for dim in dims:
-            s.append(str(dim))
+        s.extend(str(dim) for dim in dims)
         self._ir_string = IR_DELIMITER.join(s)
 
     @staticmethod
@@ -1879,8 +1914,7 @@ class SoftmaxFNode(FunctionNode):
         self.assert_num_args(1, Comparator.EQ)
 
     def parse(self):
-        s = [self.name]
-        s.append(self.parse_inoutnodes(self.innodes))
+        s = [self.name, self.parse_inoutnodes(self.innodes)]
         s.append(self.parse_inoutnodes(self.outnodes))
         s.append(enum_to_str(OpType, self.op_type))
         self._ir_string = IR_DELIMITER.join(s)
@@ -1901,11 +1935,15 @@ class ViewNode(FunctionNode):
         self.assert_num_args(2, Comparator.GEQ)
 
     def parse(self):
-        s = [self.name]
         innodes = (self.innodes[0],)
-        s.append(self.parse_inoutnodes(innodes))
-        s.append(self.parse_inoutnodes(self.outnodes))
-        s.append(enum_to_str(OpType, self.op_type))
+        s = [
+            self.name,
+            *(
+                self.parse_inoutnodes(innodes),
+                self.parse_inoutnodes(self.outnodes),
+                enum_to_str(OpType, self.op_type),
+            ),
+        ]
         for dim in self.innodes[1:]:
             assert type(dim) is int
             s.append(str(dim))
@@ -1940,13 +1978,17 @@ class ToNode(FunctionNode):
         self.assert_num_args(1, Comparator.GEQ)
 
     def parse(self):
-        s = [self.name]
         innodes = (self.innodes[0],)
-        s.append(self.parse_inoutnodes(innodes))
-        s.append(self.parse_inoutnodes(self.outnodes))
-        s.append(enum_to_str(OpType, self.op_type))
+        s = [
+            self.name,
+            *(
+                self.parse_inoutnodes(innodes),
+                self.parse_inoutnodes(self.outnodes),
+                enum_to_str(OpType, self.op_type),
+            ),
+        ]
         if len(self.innodes) == 2 and \
-            (isinstance(self.innodes[1], torch.dtype)
+                (isinstance(self.innodes[1], torch.dtype)
              or type(self.innodes[1]) is int
              or type(self.innodes[1]) is float):
             s.append(str(self.innodes[1]))
@@ -1959,12 +2001,10 @@ class ToNode(FunctionNode):
     @staticmethod
     def string_to_ff(string, ffmodel, node_to_output):
         data = Node.StringData(string)
-        input_tensor = node_to_output[data.innodes[0]]
-        return input_tensor
+        return node_to_output[data.innodes[0]]
 
     def to_ff(self, ffmodel, node_to_output):
-        input_tensor = node_to_output[self.innodes[0].name]
-        return input_tensor
+        return node_to_output[self.innodes[0].name]
 
 
 class PowNode(FunctionNode):
@@ -1974,12 +2014,16 @@ class PowNode(FunctionNode):
         self.assert_num_args(2, Comparator.EQ)
 
     def parse(self):
-        s = [self.name]
         innodes = (self.innodes[0],)
-        s.append(self.parse_inoutnodes(innodes))
-        s.append(self.parse_inoutnodes(self.outnodes))
-        s.append(enum_to_str(OpType, self.op_type))
-        s.append(str(self.innodes[1]))
+        s = [
+            self.name,
+            *(
+                self.parse_inoutnodes(innodes),
+                self.parse_inoutnodes(self.outnodes),
+                enum_to_str(OpType, self.op_type),
+                str(self.innodes[1]),
+            ),
+        ]
         self._ir_string = IR_DELIMITER.join(s)
 
     @staticmethod
@@ -2005,13 +2049,16 @@ class MeanNode(FunctionNode):
         self.assert_num_args(2, Comparator.GEQ)
 
     def parse(self):
-        s = [self.name]
         innodes = (self.innodes[0],)
-        s.append(self.parse_inoutnodes(innodes))
-        s.append(self.parse_inoutnodes(self.outnodes))
-        s.append(enum_to_str(OpType, self.op_type))
-        for dim in self.innodes[1:]:
-            s.append(str(dim))
+        s = [
+            self.name,
+            *(
+                self.parse_inoutnodes(innodes),
+                self.parse_inoutnodes(self.outnodes),
+                enum_to_str(OpType, self.op_type),
+            ),
+        ]
+        s.extend(str(dim) for dim in self.innodes[1:])
         if "keepdim" in self.kwargs:
             s.append(str(self.kwargs["keepdim"]))
         self._ir_string = IR_DELIMITER.join(s)
@@ -2029,20 +2076,14 @@ class MeanNode(FunctionNode):
         if dims[0] == -1:
             dims[0] = len(input_tensor.dims) - 1
         assert dims[0] >= 0 and dims[0] < len(input_tensor.dims)
-        if len(items) >= 6:
-            keepdims = bool(items[5])
-        else:
-            keepdims = False
+        keepdims = bool(items[5]) if len(items) >= 6 else False
         return ffmodel.mean(
             input=input_tensor, dims=dims, keepdims=keepdims, name=name,
         )
 
     def to_ff(self, ffmodel, node_to_output):
         input_tensor = node_to_output[self.innodes[0].name]
-        if "keepdim" in self.kwargs:
-            keepdims = self.kwargs["keepdim"]
-        else:
-            keepdims = False
+        keepdims = self.kwargs["keepdim"] if "keepdim" in self.kwargs else False
         dims = list(self.innodes[1:])
         # Infer the -1 dimension if needed
         for i in range(len(dims)):
@@ -2061,11 +2102,15 @@ class RsqrtNode(FunctionNode):
         self.assert_num_args(1, Comparator.EQ)
 
     def parse(self):
-        s = [self.name]
         innodes = (self.innodes[0],)
-        s.append(self.parse_inoutnodes(innodes))
-        s.append(self.parse_inoutnodes(self.outnodes))
-        s.append(enum_to_str(OpType, self.op_type))
+        s = [
+            self.name,
+            *(
+                self.parse_inoutnodes(innodes),
+                self.parse_inoutnodes(self.outnodes),
+                enum_to_str(OpType, self.op_type),
+            ),
+        ]
         self._ir_string = IR_DELIMITER.join(s)
 
     @staticmethod
@@ -2087,12 +2132,16 @@ class UnsqueezeNode(FunctionNode):
         self.assert_num_args(2, Comparator.EQ)
 
     def parse(self):
-        s = [self.name]
         innodes = (self.innodes[0],)
-        s.append(self.parse_inoutnodes(innodes))
-        s.append(self.parse_inoutnodes(self.outnodes))
-        s.append(enum_to_str(OpType, self.op_type))
-        s.append(str(self.innodes[1]))
+        s = [
+            self.name,
+            *(
+                self.parse_inoutnodes(innodes),
+                self.parse_inoutnodes(self.outnodes),
+                enum_to_str(OpType, self.op_type),
+                str(self.innodes[1]),
+            ),
+        ]
         self._ir_string = IR_DELIMITER.join(s)
 
     @staticmethod
@@ -2122,8 +2171,7 @@ class FloatNode(FunctionNode):
         self.assert_num_args(1, Comparator.EQ)
 
     def parse(self):
-        s = [self.name]
-        s.append(self.parse_inoutnodes(self.innodes))
+        s = [self.name, self.parse_inoutnodes(self.innodes)]
         s.append(self.parse_inoutnodes(self.outnodes))
         s.append(enum_to_str(OpType, self.op_type))
         self._ir_string = IR_DELIMITER.join(s)
@@ -2131,12 +2179,10 @@ class FloatNode(FunctionNode):
     @staticmethod
     def string_to_ff(string, ffmodel, node_to_output):
         data = Node.StringData(string)
-        input_tensor = node_to_output[data.innodes[0]]
-        return input_tensor
+        return node_to_output[data.innodes[0]]
 
     def to_ff(self, ffmodel, node_to_output):
-        input_tensor = node_to_output[self.innodes[0].name]
-        return input_tensor
+        return node_to_output[self.innodes[0].name]
 
 
 class TypeAsNode(FunctionNode):
@@ -2146,8 +2192,7 @@ class TypeAsNode(FunctionNode):
         self.assert_num_args(2, Comparator.EQ)
 
     def parse(self):
-        s = [self.name]
-        s.append(self.parse_inoutnodes(self.innodes))
+        s = [self.name, self.parse_inoutnodes(self.innodes)]
         s.append(self.parse_inoutnodes(self.outnodes))
         s.append(enum_to_str(OpType, self.op_type))
         self._ir_string = IR_DELIMITER.join(s)
@@ -2155,12 +2200,10 @@ class TypeAsNode(FunctionNode):
     @staticmethod
     def string_to_ff(string, ffmodel, node_to_output):
         data = Node.StringData(string)
-        input_tensor = node_to_output[data.innodes[0]]
-        return input_tensor
+        return node_to_output[data.innodes[0]]
 
     def to_ff(self, ffmodel, node_to_output):
-        input_tensor = node_to_output[self.innodes[0].name]
-        return input_tensor
+        return node_to_output[self.innodes[0].name]
 
 
 class DropoutFNode(FunctionNode):
@@ -2170,11 +2213,9 @@ class DropoutFNode(FunctionNode):
         self.assert_num_args(1, Comparator.EQ)
 
     def parse(self):
-        s = [self.name]
-        s.append(self.parse_inoutnodes(self.innodes))
+        s = [self.name, self.parse_inoutnodes(self.innodes)]
         s.append(self.parse_inoutnodes(self.outnodes))
-        s.append(enum_to_str(OpType, self.op_type))
-        s.append(str(self.kwargs["p"]))
+        s.extend((enum_to_str(OpType, self.op_type), str(self.kwargs["p"])))
         self._ir_string = IR_DELIMITER.join(s)
 
     @staticmethod
@@ -2196,8 +2237,7 @@ class ContiguousNode(FunctionNode):
         self.assert_num_args(1, Comparator.EQ)
 
     def parse(self):
-        s = [self.name]
-        s.append(self.parse_inoutnodes(self.innodes))
+        s = [self.name, self.parse_inoutnodes(self.innodes)]
         s.append(self.parse_inoutnodes(self.outnodes))
         s.append(enum_to_str(OpType, self.op_type))
         self._ir_string = IR_DELIMITER.join(s)
@@ -2205,12 +2245,10 @@ class ContiguousNode(FunctionNode):
     @staticmethod
     def string_to_ff(string, ffmodel, node_to_output):
         data = Node.StringData(string)
-        input_tensor = node_to_output[data.innodes[0]]
-        return input_tensor
+        return node_to_output[data.innodes[0]]
 
     def to_ff(self, ffmodel, node_to_output):
-        input_tensor = node_to_output[self.innodes[0].name]
-        return input_tensor
+        return node_to_output[self.innodes[0].name]
 
 
 class TanhFNode(FunctionNode):
@@ -2220,8 +2258,7 @@ class TanhFNode(FunctionNode):
         self.assert_num_args(1, Comparator.EQ)
 
     def parse(self):
-        s = [self.name]
-        s.append(self.parse_inoutnodes(self.innodes))
+        s = [self.name, self.parse_inoutnodes(self.innodes)]
         s.append(self.parse_inoutnodes(self.outnodes))
         s.append(enum_to_str(OpType, self.op_type))
         self._ir_string = IR_DELIMITER.join(s)
@@ -2242,8 +2279,7 @@ class GeluFNode(FunctionNode):
         self.assert_num_args(1, Comparator.EQ)
 
     def parse(self):
-        s = [self.name]
-        s.append(self.parse_inoutnodes(self.innodes))
+        s = [self.name, self.parse_inoutnodes(self.innodes)]
         s.append(self.parse_inoutnodes(self.outnodes))
         s.append(enum_to_str(OpType, self.op_type))
         self._ir_string = IR_DELIMITER.join(s)
@@ -2276,8 +2312,7 @@ class AttributeNode(Node):
         return attr_iter
 
     def parse(self):
-        s = [self.name]
-        s.append(enum_to_str(OpType, self.op_type))
+        s = [self.name, enum_to_str(OpType, self.op_type)]
         self._ir_string = IR_DELIMITER.join(s)
 
     @staticmethod
@@ -2328,8 +2363,7 @@ class InputNode(Node):
         self.op_type = OpType.INPUT
 
     def parse(self):
-        s = [self.name]
-        s.append(self.parse_inoutnodes(self.innodes))
+        s = [self.name, self.parse_inoutnodes(self.innodes)]
         s.append(self.parse_inoutnodes(self.outnodes))
         s.append(enum_to_str(OpType, self.op_type))
         self._ir_string = IR_DELIMITER.join(s)
@@ -2356,23 +2390,22 @@ class OutputNode(Node):
         if type(self.innodes[0]) is tuple:
             innodes = self.innodes[0]
             s.append(self.parse_inoutnodes(innodes))
-            s.append(self.parse_inoutnodes(self.outnodes))
-        # NOTE: This case targets MT5Model
         elif type(self.innodes[0]) is immutable_dict and \
-                "last_hidden_state" in self.innodes[0]:
+                    "last_hidden_state" in self.innodes[0]:
             innodes = (self.innodes[0]["last_hidden_state"],)
             s.append(self.parse_inoutnodes(innodes))
-            s.append(self.parse_inoutnodes(self.outnodes))
-        # NOTE: This case targets MT5ForConditionalGeneration
         elif type(self.innodes[0]) is immutable_dict and \
-                "logits" in self.innodes[0]:
+                    "logits" in self.innodes[0]:
             innodes = (self.innodes[0]["logits"],)
             s.append(self.parse_inoutnodes(innodes))
-            s.append(self.parse_inoutnodes(self.outnodes))
         else:
             s.append(self.parse_inoutnodes(self.innodes))
-            s.append(self.parse_inoutnodes(self.outnodes))
-        s.append(enum_to_str(OpType, self.op_type))
+        s.extend(
+            (
+                self.parse_inoutnodes(self.outnodes),
+                enum_to_str(OpType, self.op_type),
+            )
+        )
         self._ir_string = IR_DELIMITER.join(s)
 
     @staticmethod
@@ -2427,14 +2460,14 @@ class PyTorchModel():
     def _trace_model(self):
         if self.is_hf_model:
             from transformers.utils.fx import \
-                symbolic_trace as hf_symbolic_trace
+                    symbolic_trace as hf_symbolic_trace
             traced = hf_symbolic_trace(
                 self.model,
                 input_names=self.input_names,
                 batch_size=self.batch_size,
             ) \
-                if self.seq_length is None \
-                else hf_symbolic_trace(
+                    if self.seq_length is None \
+                    else hf_symbolic_trace(
                     self.model,
                     input_names=self.input_names,
                     batch_size=self.batch_size,
@@ -2443,10 +2476,7 @@ class PyTorchModel():
         else:
             traced = torch.fx.symbolic_trace(self.model)
 
-        # Convert the fx graph to an internal graph representation
-        name_to_module = {}
-        for name, module in self.model.named_modules():
-            name_to_module[name] = module
+        name_to_module = dict(self.model.named_modules())
         graph = []
         for fx_node in traced.graph.nodes:
             if fx_node.op == "call_module":
@@ -2457,7 +2487,7 @@ class PyTorchModel():
                 node = InputNode(fx_node)
             elif fx_node.op == "get_attr":
                 node = AttributeNode(fx_node, self.model)
-            elif fx_node.op == "call_function" or fx_node.op == "call_method":
+            elif fx_node.op in ["call_function", "call_method"]:
                 node = FunctionNode.construct_node(fx_node)
             elif fx_node.op == "output":
                 node = OutputNode(fx_node)
@@ -2476,14 +2506,14 @@ class PyTorchModel():
         while i < len(graph):
             # Check for the `T5LayerNorm` sequence and coalesce if found
             if i + 7 < len(graph) and \
-                    isinstance(graph[i], ToNode) and \
-                    isinstance(graph[i + 1], PowNode) and \
-                    isinstance(graph[i + 2], MeanNode) and \
-                    isinstance(graph[i + 3], ScalarAddNode) and \
-                    isinstance(graph[i + 4], RsqrtNode) and \
-                    isinstance(graph[i + 5], MulNode) and \
-                    isinstance(graph[i + 6], AttributeNode) and \
-                    isinstance(graph[i + 7], MulNode):
+                        isinstance(graph[i], ToNode) and \
+                        isinstance(graph[i + 1], PowNode) and \
+                        isinstance(graph[i + 2], MeanNode) and \
+                        isinstance(graph[i + 3], ScalarAddNode) and \
+                        isinstance(graph[i + 4], RsqrtNode) and \
+                        isinstance(graph[i + 5], MulNode) and \
+                        isinstance(graph[i + 6], AttributeNode) and \
+                        isinstance(graph[i + 7], MulNode):
                 layer_norm_graph.append(
                     T5LayerNormNode(graph[i], graph[i + 7])
                 )
@@ -2591,8 +2621,7 @@ class PyTorchModel():
                 representation (in topological order).
         """
         graph = self._trace_model()
-        s = [node.ir_string for node in graph]
-        return s
+        return [node.ir_string for node in graph]
 
     def torch_to_file(self, filename):
         """Writes the result of :meth:`torch_to_string` to the file given by

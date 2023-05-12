@@ -48,8 +48,12 @@ class BatchNormalization(Layer):
     pass
     
   def get_summary(self):
-    summary = "%s%s\t\t%s%s\n"%(self._get_summary_name(), self.output_shape, self.input_shape, self._get_summary_connected_to())
-    return summary
+    return "%s%s\t\t%s%s\n" % (
+        self._get_summary_name(),
+        self.output_shape,
+        self.input_shape,
+        self._get_summary_connected_to(),
+    )
     
   def __call__(self, input_tensor):
     return self._connect_layer_1_input_1_output(input_tensor)

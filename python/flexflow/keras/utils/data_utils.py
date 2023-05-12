@@ -102,7 +102,7 @@ def _extract_archive(file_path, path='.', archive_format='auto'):
         if archive_type == 'tar':
             open_fn = tarfile.open
             is_match_fn = tarfile.is_tarfile
-        if archive_type == 'zip':
+        elif archive_type == 'zip':
             open_fn = zipfile.ZipFile
             is_match_fn = zipfile.is_zipfile
 
@@ -193,20 +193,21 @@ def get_file(fname,
 
     if untar:
         untar_fpath = os.path.join(datadir, fname)
-        fpath = untar_fpath + '.tar.gz'
+        fpath = f'{untar_fpath}.tar.gz'
     else:
         fpath = os.path.join(datadir, fname)
 
     download = False
     if os.path.exists(fpath):
         # File found; verify integrity if a hash was provided.
-        if file_hash is not None:
-            if not validate_file(fpath, file_hash, algorithm=hash_algorithm):
-                print('A local file was found, but it seems to be incomplete'
-                      ' or outdated because the {} file hash does not match '
-                      'the original value of {} so we will re-download the '
-                      'data.'.format(hash_algorithm, file_hash))
-                download = True
+        if file_hash is not None and not validate_file(
+            fpath, file_hash, algorithm=hash_algorithm
+        ):
+            print('A local file was found, but it seems to be incomplete'
+                  ' or outdated because the {} file hash does not match '
+                  'the original value of {} so we will re-download the '
+                  'data.'.format(hash_algorithm, file_hash))
+            download = True
     else:
         download = True
 
@@ -303,10 +304,7 @@ def validate_file(fpath, file_hash, algorithm='auto', chunk_size=65535):
     else:
         hasher = 'md5'
 
-    if str(_hash_file(fpath, hasher, chunk_size)) == str(file_hash):
-        return True
-    else:
-        return False
+    return str(_hash_file(fpath, hasher, chunk_size)) == str(file_hash)
 
 
 class Sequence(object):
@@ -381,8 +379,7 @@ class Sequence(object):
 
     def __iter__(self):
         """Create a generator that iterate over the Sequence."""
-        for item in (self[i] for i in range(len(self))):
-            yield item
+        yield from (self[i] for i in range(len(self)))
 
 
 # Global variables to be shared across processes
@@ -618,9 +615,9 @@ class OrderedEnqueuer(SequenceEnqueuer):
                 except mp.TimeoutError:
                     idx = future.idx
                     warnings.warn(
-                        'The input {} could not be retrieved.'
-                        ' It could be because a worker has died.'.format(idx),
-                        UserWarning)
+                        f'The input {idx} could not be retrieved. It could be because a worker has died.',
+                        UserWarning,
+                    )
                     inputs = self.sequence[idx]
                 finally:
                     self.queue.task_done()

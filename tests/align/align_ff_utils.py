@@ -32,11 +32,10 @@ def init_ffmodel(
 ) -> Tuple[SingleDataLoader, ...]:
     """Initializes the FFModel by creating the data loaders and initializing
     the model layers."""
-    dls = []
-    for input_tensor, inp in input_tensors:
-        dls.append(
-            ffmodel.create_data_loader(input_tensor, inp.numpy())
-        )
+    dls = [
+        ffmodel.create_data_loader(input_tensor, inp.numpy())
+        for input_tensor, inp in input_tensors
+    ]
     dls.append(
         ffmodel.create_data_loader(ffmodel.label_tensor, label.numpy())
     )

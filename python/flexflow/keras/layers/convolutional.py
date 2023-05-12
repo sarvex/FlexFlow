@@ -59,23 +59,23 @@ class Conv2D(Layer):
       assert 0, "kernel_constraint is not supported"
     if bias_constraint != None:
       assert 0, "bias_constraint is not supported"
-    
+
     super(Conv2D, self).__init__("conv2d", "Conv2D", **kwargs) 
-    
+
     if kernel_initializer == "glorot_uniform":
       self.kernel_initializer = DefaultInitializer()
-    elif isinstance(kernel_initializer, Initializer) == True:
+    elif isinstance(kernel_initializer, Initializer):
       self.kernel_initializer = kernel_initializer
     else:
       assert 0, "[Dense]: unknown kernel_initializer"
-      
+
     if bias_initializer == "zeros":
       self.bias_initializer = DefaultInitializer()
-    elif isinstance(bias_initializer, Initializer) == True:
+    elif isinstance(bias_initializer, Initializer):
       self.bias_initializer = bias_initializer
     else:
       assert 0, "[Dense]: unknown bias_initializer"
-    
+
     self.in_channels = 0
     self.out_channels = filters
     assert len(kernel_size)==2, "wrong dim of kernel_size"
@@ -86,16 +86,16 @@ class Conv2D(Layer):
       self.padding = (0, 0)
     elif padding == "same":
       self.padding = "same"
-    elif (isinstance(padding, list) or isinstance(padding, tuple)):
+    elif isinstance(padding, (list, tuple)):
       assert len(padding)==2, "[Conv2D]: wrong dim of padding"
       self.padding = tuple(padding)
     else:
       assert 0, "[Conv2D]: check padding"
     self.groups = groups
-    if (activation == None):
-      self.activation = ff.ActiMode.AC_MODE_NONE
-    elif(activation =="relu"):
+    if activation == "relu":
       self.activation = ff.ActiMode.AC_MODE_RELU
+    elif activation is None:
+      self.activation = ff.ActiMode.AC_MODE_NONE
     else:
       assert 0, "activation is not supported"
     if input_shape != None:
@@ -114,8 +114,12 @@ class Conv2D(Layer):
     assert self.out_channels != 0, "[Conv2D]: out channels is wrong"
     
   def get_summary(self):
-    summary = "%s%s\t\t%s\t%s\n"%(self._get_summary_name(), self.output_shape, self.input_shape, self._get_summary_connected_to())
-    return summary
+    return "%s%s\t\t%s\t%s\n" % (
+        self._get_summary_name(),
+        self.output_shape,
+        self.input_shape,
+        self._get_summary_connected_to(),
+    )
     
   def get_weights(self, ffmodel):
     return self._get_weights(ffmodel)
@@ -135,7 +139,7 @@ class Conv2D(Layer):
     assert input_h != 0, "wrong input_h"
     assert input_w != 0, "wrong input_w"
     assert input_d != 0, "wrong input_d"
-    
+
     #calculate padding for same
     if (self.padding == 'same'):
       if (input_h % self.stride[0] == 0):
@@ -147,15 +151,15 @@ class Conv2D(Layer):
       else:
         padding_w = max(self.kernel_size[1] - (input_w % self.stride[1]), 0)
       self.padding = (padding_h//2, padding_w//2)
-      fflogger.debug("conv2d same padding %s" %(str(self.padding)))
-    
+      fflogger.debug(f"conv2d same padding {self.padding}")
+
     self.input_shape = (input_b, input_d, input_w, input_h)
     self.in_channels = input_d
     output_h = 1 + math.floor((input_h + 2 * self.padding[0] - self.kernel_size[0]) / self.stride[0])
     output_w = 1 + math.floor((input_w + 2 * self.padding[1] - self.kernel_size[1]) / self.stride[1])
     output_d = self.out_channels
     self.output_shape = (input_b, output_d, output_h, output_w)
-    fflogger.debug("conv2d input %s, output %s" %( str(self.input_shape), str(self.output_shape)))
+    fflogger.debug(f"conv2d input {self.input_shape}, output {self.output_shape}")
     
   def _verify_inout_tensor_shape(self, input_tensor, output_tensor):
     assert input_tensor.num_dims == 4, "[Conv2D]: check input tensor dims"

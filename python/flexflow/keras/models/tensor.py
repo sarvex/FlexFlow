@@ -31,20 +31,17 @@ class Tensor(object):
     if ragged != False:
       assert 0, "ragged is not supported"
 
-    batch_shape = None
-    if "batch_shape" in kwargs:
-      batch_shape = kwargs["batch_shape"]
-
+    batch_shape = kwargs.get("batch_shape", None)
     self._ffhandle = ffhandle
     self.to_layers = []
     self.from_layer = 0
-    if dtype == None or dtype == "float32" or dtype == ff.DataType.DT_FLOAT:
+    if dtype is None or dtype == "float32" or dtype == ff.DataType.DT_FLOAT:
       self.dtype = ff.DataType.DT_FLOAT
-    elif dtype == "float64" or dtype == ff.DataType.DT_DOUBLE:
+    elif dtype in ["float64", ff.DataType.DT_DOUBLE]:
       self.dtype = ff.DataType.DT_DOUBLE
-    elif dtype == "int32" or dtype == ff.DataType.DT_INT32:
+    elif dtype in ["int32", ff.DataType.DT_INT32]:
       self.dtype = ff.DataType.DT_INT32
-    elif dtype == "int64" or dtype == ff.DataType.DT_INT64:
+    elif dtype in ["int64", ff.DataType.DT_INT64]:
       self.dtype = ff.DataType.DT_INT64
     else:
       assert 0, "not supported"
@@ -54,19 +51,16 @@ class Tensor(object):
       self.name = kwargs["name"]
 
     # create a tensor
-    if ffhandle == None:
-      if batch_shape != None:
+    if ffhandle is None:
+      if batch_shape is None:
+        self.num_dims = len(shape) + 1
+        self.batch_shape = ((0, ) + shape if batch_size is None else
+                            (batch_size, ) + shape)
+      else:
         self.batch_shape = batch_shape
         self.num_dims = len(batch_shape)
-      else:
-        self.num_dims = len(shape) + 1
-        if batch_size == None:
-          self.batch_shape = (0,) + shape
-        else:
-          self.batch_shape = (batch_size,) + shape
       if (meta_only == False):
         self.create_ff_tensor(ffmodel)
-    # init from handle
     else:
       self.batch_shape = ffhandle.dims
       self.num_dims = ffhandle.num_dims
@@ -83,8 +77,9 @@ class Tensor(object):
 
   @ffhandle.setter
   def ffhandle(self, handle):
-    assert isinstance(handle, ff.Tensor) == True, "[Tensor]: ffhandle is not the correct type"
-    assert self._ffhandle == None, "[Tensor]: check handle, already set"
+    assert isinstance(handle,
+                      ff.Tensor), "[Tensor]: ffhandle is not the correct type"
+    assert self._ffhandle is None, "[Tensor]: check handle, already set"
     self._ffhandle = handle
     if (self.batch_shape[0] == 0):
       self.set_batch_size(handle.dims[0])

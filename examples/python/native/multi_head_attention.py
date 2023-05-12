@@ -21,7 +21,7 @@ def attention():
   q = ffmodel.dense(input, args.hidden_size)
   k = ffmodel.dense(input, args.hidden_size)
   v = ffmodel.dense(input, args.hidden_size)
-  
+
   q = ffmodel.reshape(q, shape=(batch_size, args.seq_length, args.num_heads, args.hidden_size // args.num_heads))
   k = ffmodel.reshape(k, shape=(batch_size, args.seq_length, args.num_heads, args.hidden_size // args.num_heads))
   v = ffmodel.reshape(v, shape=(batch_size, args.seq_length, args.num_heads, args.hidden_size // args.num_heads))
@@ -55,10 +55,10 @@ def attention():
   dl_label.next_batch(ffmodel)
 
   ts_start = ffconfig.get_current_time()
-  for epoch in range(0, epochs):
+  for _ in range(0, epochs):
     ffmodel.reset_metrics()
     iterations = num_samples // batch_size
-    for iter in range(0, iterations):
+    for _ in range(0, iterations):
       ffconfig.begin_trace(111)
       ffmodel.forward()
       ffmodel.zero_gradients()

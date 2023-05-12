@@ -92,7 +92,7 @@ def top_level_task():
   ffmodel.compile(loss_type=LossType.LOSS_SPARSE_CATEGORICAL_CROSSENTROPY, metrics=[MetricsType.METRICS_ACCURACY, MetricsType.METRICS_SPARSE_CATEGORICAL_CROSSENTROPY])
   label_tensor = ffmodel.label_tensor
 
-  next_batch(0, x_train, input_tensor, ffconfig, ffmodel)
+  next_batch(0, full_input_array, input_tensor, ffconfig, ffmodel)
   next_batch_label(0, y_train, label_tensor, ffconfig, ffmodel)
 
   ffmodel.init_layers()
@@ -100,22 +100,17 @@ def top_level_task():
   epochs = ffconfig.epochs
 
   ts_start = ffconfig.get_current_time()
-  for epoch in range(0,epochs):
+  for _ in range(0,epochs):
     ffmodel.reset_metrics()
     iterations = int(num_samples / ffconfig.batch_size)
     print(iterations, num_samples)
-    ct = 0
-    for iter in range(0, int(iterations)):
-      #ffconfig.begin_trace(111)
-      next_batch(ct, x_train, input_tensor, ffconfig, ffmodel)
+    for ct, _ in enumerate(range(0, iterations)):
+      next_batch(ct, full_input_array, input_tensor, ffconfig, ffmodel)
       next_batch_label(ct, y_train, label_tensor, ffconfig, ffmodel)
-      ct += 1
       ffmodel.forward()
       ffmodel.zero_gradients()
       ffmodel.backward()
       ffmodel.update()
-      #ffconfig.end_trace(111)
-
   ts_end = ffconfig.get_current_time()
   run_time = 1e-6 * (ts_end - ts_start);
   print("epochs %d, ELAPSED TIME = %.4fs, THROUGHPUT = %.2f samples/s\n" %(epochs, run_time, num_samples * epochs / run_time));

@@ -123,7 +123,7 @@ def create_single_operator_ff():
     dataloaders = init_ffmodel(ffmodel, input_tensors, label)
     assert len(dataloaders) == len(input_tensors) + 1
 
-    input_dataloaders = dataloaders[0: len(dataloaders) - 1]
+    input_dataloaders = dataloaders[:-1]
     label_dataloaders = dataloaders[len(dataloaders) - 1]
     # forward/backward pass
     run_fwd_bwd(ffmodel, ffconfig, input_dataloaders, label_dataloaders)

@@ -71,9 +71,7 @@ def top_level_task():
     print("epochs %d, ELAPSED TIME = %.4fs, THROUGHPUT = %.2f samples/s\n" %
           (epochs, run_time, num_samples * epochs / run_time))
 
-    perf_metrics = ffmodel.get_perf_metrics()
-
-    return perf_metrics
+    return ffmodel.get_perf_metrics()
 
 
 def test_accuracy():

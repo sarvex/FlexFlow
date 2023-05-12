@@ -40,8 +40,12 @@ class DataPreparer():
 
         data = []
         for sinhala, english in zip(sinhala_text, english_text):
-            data.append(["translate sinhala to english", sinhala, english])
-            data.append(["translate english to sinhala", english, sinhala])
+            data.extend(
+                (
+                    ["translate sinhala to english", sinhala, english],
+                    ["translate english to sinhala", english, sinhala],
+                )
+            )
         train_df = pd.DataFrame(
             data, columns=["prefix", "input_text", "target_text"]
         )
@@ -57,8 +61,12 @@ class DataPreparer():
 
         data = []
         for sinhala, english in zip(sinhala_text, english_text):
-            data.append(["translate sinhala to english", sinhala, english])
-            data.append(["translate english to sinhala", english, sinhala])
+            data.extend(
+                (
+                    ["translate sinhala to english", sinhala, english],
+                    ["translate english to sinhala", english, sinhala],
+                )
+            )
         eval_df = pd.DataFrame(
             data, columns=["prefix", "input_text", "target_text"]
         )

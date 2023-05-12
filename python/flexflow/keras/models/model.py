@@ -23,15 +23,15 @@ from flexflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Activati
 class Model(BaseModel):
   def __init__(self, inputs, outputs, name=None):
     super(Model, self).__init__(name)
-    
-    if (isinstance(inputs, list) == False):
-       inputs = [inputs]
-    
+
+    if not isinstance(inputs, list):
+      inputs = [inputs]
+
     self._input_tensors = inputs
     for input_tensor in inputs:
       self._input_layers.append(input_tensor.from_layer)
     self._output_tensor = outputs
-    
+
     self.__traverse_dag_dfs()
     fflogger.debug("nb_layers %d" %(self._nb_layers))
     
@@ -47,17 +47,15 @@ class Model(BaseModel):
   def _add_layer_metadata(self, layer):
     self._layers.append(layer)
     #assert layer.layer_id == -1, "layer id is inited"
-    assert layer.ffhandle == None, "layer handle is inited"
+    assert layer.ffhandle is None, "layer handle is inited"
     layer.layer_id = self._nb_layers
     self._nb_layers += 1       
 
   def __traverse_dag_bfs(self):
-    bfs_queue = []
-    for input_layer in self._input_layers:
-      bfs_queue.append(input_layer)
-    while(len(bfs_queue) != 0):
+    bfs_queue = list(self._input_layers)
+    while bfs_queue:
       layer = bfs_queue.pop(0)
-      if (isinstance(layer, InputLayer) == False):
+      if not isinstance(layer, InputLayer):
        #fflogger.debug(layer)
         self._add_layer_metadata(layer)
       for child in layer.next_layers:
@@ -73,12 +71,10 @@ class Model(BaseModel):
       layer.has_visited = False
     
   def __traverse_dag_dfs(self):    
-    dfs_stack = []
-    for input_layer in reversed(self._input_layers):
-      dfs_stack.append(input_layer)
-    while(len(dfs_stack) != 0):
+    dfs_stack = list(reversed(self._input_layers))
+    while dfs_stack:
       layer = dfs_stack.pop()
-      if (isinstance(layer, InputLayer) == False):
+      if not isinstance(layer, InputLayer):
         #fflogger.debug(layer)
         self._add_layer_metadata(layer)
       for child in reversed(layer.next_layers):

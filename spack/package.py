@@ -79,22 +79,22 @@ class Flexflow(CMakePackage):
     spec = self.spec
     cmake_cxx_flags = []
     options = ['-DCUDA_USE_STATIC_CUDA_RUNTIME=OFF']
-    
+
     if '+python' in spec:
       options.append('-DFF_USE_PYTHON=ON')
     else:
       options.append('-DFF_USE_PYTHON=OFF')
-      
+
     if '+nccl' in spec:
       options.append('-DFF_USE_NCCL=ON')
     else:
       options.append('-DFF_USE_NCCL=OFF')
-      
+
     if '+examples' in spec:
       options.append('-DFF_BUILD_ALL_EXAMPLES=ON')
     else:
       options.append('-DFF_BUILD_ALL_EXAMPLES=OFF')
-      
+
     if '+avx2' in spec:
       options.append('-DFF_USE_AVX2=ON')
     else:
@@ -103,15 +103,15 @@ class Flexflow(CMakePackage):
     if '+gasnet' in spec:
       options.append('-DFF_USE_GASNET=ON')
       gasnet_conduit = spec.variants['conduit'].value
-      options.append('-DFF_GASNET_CONDUIT=%s' % gasnet_conduit)
+      options.append(f'-DFF_GASNET_CONDUIT={gasnet_conduit}')
     else:
       options.append('-DFF_USE_GASNET=OFF')
 
     maxdims = int(spec.variants['max_dims'].value)
     options.append('-DFF_MAX_DIM=%d' % maxdims)
-  
+
     cuda_arch = spec.variants['cuda_arch'].value
     if cuda_arch != '0': 
-      options.append('-DFF_CUDA_ARCH=%s' % cuda_arch)
-    
+      options.append(f'-DFF_CUDA_ARCH={cuda_arch}')
+
     return options

@@ -24,10 +24,7 @@ from accuracy import ModelAccuracy
 import numpy as np
 
 def lr_scheduler(epoch):
-  if epoch == 0:
-    return 0.01
-  else:
-    return 0.02
+  return 0.01 if epoch == 0 else 0.02
 
 def top_level_task():
   print(K.backend())

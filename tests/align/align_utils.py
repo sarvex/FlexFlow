@@ -57,7 +57,7 @@ def gen_tensor(
             generated.
     """
     make_deterministic()
-    is_integer_dtype = str(dtype).find("int") >= 0
+    is_integer_dtype = "int" in dtype
     if is_integer_dtype:
         low = kwargs.get("low", -5)
         high = kwargs.get("high", 6)

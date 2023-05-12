@@ -23,10 +23,7 @@ if 'FF_USE_CFFI' in os.environ:
 else:
   use_pybind = False
 
-if use_pybind:
-  _FF_PYTHON_BINDING = 'pybind11'
-else:
-  _FF_PYTHON_BINDING = 'cffi'
+_FF_PYTHON_BINDING = 'pybind11' if use_pybind else 'cffi'
   
 def flexflow_python_binding():
   return _FF_PYTHON_BINDING
@@ -38,23 +35,20 @@ if 'FF_USE_NATIVE_PYTHON' not in os.environ:
   use_native_python = 0
 else:
   use_native_python = int(os.environ['FF_USE_NATIVE_PYTHON'])
-  
-if use_native_python:
-  _FF_PYTHON_INTERPRETER = 'native'
-else:
-  _FF_PYTHON_INTERPRETER = 'legion'
+
+_FF_PYTHON_INTERPRETER = 'native' if use_native_python else 'legion'
   
 def flexflow_python_interpreter():
   return _FF_PYTHON_INTERPRETER
 
 # build docs
 _FF_BUILD_DOCS = bool(os.environ.get('READTHEDOCS') or os.environ.get("FF_BUILD_DOCS"))
-  
+
 # init import
 # It is used to run __init__.py in flexflow/core
 # The following cases __init__.py is not needed:
 # 1. build docs = True
-_FF_INIT_IMPORT = _FF_BUILD_DOCS == False
+_FF_INIT_IMPORT = not _FF_BUILD_DOCS
 
 def flexflow_init_import():
   return _FF_INIT_IMPORT

@@ -6,9 +6,7 @@ import torch.optim as optim
 
 
 def dump_numpy_array_to_file(ndarray, file_name):
-    buffer = []
-    for entry in ndarray.flatten():
-      buffer.append(entry)
+    buffer = list(ndarray.flatten())
     buffer = ["%.6f"%x for x in buffer]
     with open(file_name, 'w+') as f:
       f.write(' '.join(buffer))
@@ -36,7 +34,7 @@ def batch_transpose_3d_reference(input):
     return input.transpose((0,2,1))
 
 def gen_FF_result(test_target, num_gpu):
-    command = 'cd ~/DLRM_FlexFlow/src/ops/tests/ && ./test_run_FF_target.sh %s %s' % (test_target, str(num_gpu))
+    command = f'cd ~/DLRM_FlexFlow/src/ops/tests/ && ./test_run_FF_target.sh {test_target} {str(num_gpu)}'
     test_process = subprocess.Popen([command], shell=True, stdin=PIPE, stdout=PIPE, stderr=STDOUT)
     test_process.stdout.read()
     test_process.wait()
@@ -52,10 +50,10 @@ def is_equal_tensor_from_file(file_1, file_2, label='', epsilon=0.00001):
     input2_flat = [float(x) for x in input2_flat]
     diff_set = set()
     try:
-      np.testing.assert_allclose(input1_flat, input2_flat, rtol=epsilon, atol=epsilon)
+        np.testing.assert_allclose(input1_flat, input2_flat, rtol=epsilon, atol=epsilon)
     except Exception as e:
-      print('checking equal %s failed, error message: %s' % (label, e))
-      raise e 
+        print(f'checking equal {label} failed, error message: {e}')
+        raise e 
 
 def average_error_tolerance(file_1, file_2, label='', epsilon=0.00001):
     with open(file_1, 'r') as f:
@@ -70,10 +68,10 @@ def average_error_tolerance(file_1, file_2, label='', epsilon=0.00001):
     input2_flat = np.array(input2_flat)
     avg_diff = abs(sum(input1_flat - input2_flat) / len(input1_flat))
     try:
-      assert(avg_diff < epsilon)
+        assert(avg_diff < epsilon)
     except Exception as e:
-      print('checking equal %s failed, error message: %s' % (label, e))
-      raise e   
+        print(f'checking equal {label} failed, error message: {e}')
+        raise e   
 
 class Linear(torch.nn.Module):
     def __init__(self, in_features, out_features, weights=None, bias=False):
@@ -89,8 +87,7 @@ class Linear(torch.nn.Module):
               self.projected_rtc_layer.bias = torch.nn.Parameter(torch.from_numpy(weights[1]).float(), requires_grad=True)
 
     def forward(self, dense_projection):
-        projected_rtc = self.projected_rtc_layer(dense_projection)
-        return projected_rtc
+        return self.projected_rtc_layer(dense_projection)
 
 
 class DotCompressor(torch.nn.Module):
@@ -178,12 +175,11 @@ class DotCompressor(torch.nn.Module):
         if debug:
             print('tanh_flatteded_pairwise', tanh_flatteded_pairwise.shape)
         if dense_projection is None:
-          return tanh_flatteded_pairwise
-        else:
-          cat_compression_ret = torch.cat([tanh_flatteded_pairwise, dense_projection], 1)
-          if debug:
-              print('dense_projection', dense_projection.shape)
-          return cat_compression_ret
+            return tanh_flatteded_pairwise
+        cat_compression_ret = torch.cat([tanh_flatteded_pairwise, dense_projection], 1)
+        if debug:
+            print('dense_projection', dense_projection.shape)
+        return cat_compression_ret
 
 class LinearTest(unittest.TestCase):
     TEST_TARGET = 'linear_test'

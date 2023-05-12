@@ -81,11 +81,6 @@ class EpochVerifyMetrics(Callback):
   def on_epoch_end(self, logs=None):
     perf_metrics = self.model.ffmodel.get_perf_metrics()
     accuracy = perf_metrics.get_accuracy()
-    if self.early_stop == False:
-      return False
-    if accuracy > self.accuracy:
-      return True
-    else:
-      return False
+    return False if self.early_stop == False else accuracy > self.accuracy
       
     

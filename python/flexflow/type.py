@@ -116,7 +116,7 @@ def enum_to_int(enum, enum_item):
 
   print(enum_item)
   print(enum)
-  assert 0, "unknown enum type " + str(enum_item) + " " + str(enum)
+  assert 0, f"unknown enum type {str(enum_item)} {str(enum)}"
   return -1
 
 def int_to_enum(enum, value):
@@ -124,7 +124,7 @@ def int_to_enum(enum, value):
     if (item.value == value):
       return item
 
-  assert 0, "unknown enum value " + str(value) + " " + str(enum)
+  assert 0, f"unknown enum value {str(value)} {str(enum)}"
   
 def enum_to_str(enum, enum_item):
   name = enum(enum_item).name
@@ -135,4 +135,4 @@ def str_to_enum(enum, value):
     if (item.name == value):
       return item
 
-  assert 0, "unknown enum value " + value + " " + str(enum)
+  assert 0, f"unknown enum value {value} {str(enum)}"

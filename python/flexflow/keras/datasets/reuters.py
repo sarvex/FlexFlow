@@ -48,7 +48,7 @@ def load_data(path='reuters.npz', num_words=None, skip_top=0,
                       'has been renamed `num_words`.')
         num_words = kwargs.pop('nb_words')
     if kwargs:
-        raise TypeError('Unrecognized keyword arguments: ' + str(kwargs))
+        raise TypeError(f'Unrecognized keyword arguments: {kwargs}')
 
     path = get_file(path,
                     origin='https://s3.amazonaws.com/text-datasets/reuters.npz',
@@ -71,7 +71,7 @@ def load_data(path='reuters.npz', num_words=None, skip_top=0,
         xs, labels = _remove_long_seq(maxlen, xs, labels)
 
     if not num_words:
-        num_words = max([max(x) for x in xs])
+        num_words = max(max(x) for x in xs)
 
     # by convention, use 2 as OOV word
     # reserve 'index_from' (=3 by default) characters:

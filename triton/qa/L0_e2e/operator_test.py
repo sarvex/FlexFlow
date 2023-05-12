@@ -48,7 +48,7 @@ class OperatorTest(unittest.TestCase):
         output_name = 'output'
         outputs = [tritonhttpclient.InferRequestedOutput(output_name)]
 
-        log.debug("input data: {}".format(input_data))
+        log.debug(f"input data: {input_data}")
 
         try:
             result = self.client.infer(model_name=model_name,
@@ -59,11 +59,11 @@ class OperatorTest(unittest.TestCase):
             output_data = result.as_numpy(output_name)
             self.assertTrue(
                 np.array_equal(output_data, input_data),
-                "Expect response to have value {}, got {}".format(
-                    input_data, output_data))
-            log.debug("output data: {}".format(output_data))
+                f"Expect response to have value {input_data}, got {output_data}",
+            )
+            log.debug(f"output data: {output_data}")
         except InferenceServerException as ex:
-            self.assertTrue(False, "unexpected error {}".format(ex))
+            self.assertTrue(False, f"unexpected error {ex}")
         log.debug("====== end of test_identity ======")
 
     def test_add(self):
@@ -86,7 +86,7 @@ class OperatorTest(unittest.TestCase):
         outputs = [tritonhttpclient.InferRequestedOutput(output_name)]
         expected_output_data = input_data + input_data
 
-        log.debug("input data: {}".format(input_data))
+        log.debug(f"input data: {input_data}")
 
         try:
             result = self.client.infer(model_name=model_name,
@@ -97,11 +97,11 @@ class OperatorTest(unittest.TestCase):
             output_data = result.as_numpy(output_name)
             self.assertTrue(
                 np.array_equal(output_data, expected_output_data),
-                "Expect response to have value {}, got {}".format(
-                    expected_output_data, output_data))
-            log.debug("output data: {}".format(output_data))
+                f"Expect response to have value {expected_output_data}, got {output_data}",
+            )
+            log.debug(f"output data: {output_data}")
         except InferenceServerException as ex:
-            self.assertTrue(False, "unexpected error {}".format(ex))
+            self.assertTrue(False, f"unexpected error {ex}")
         log.debug("====== end of test_add ======")
 
     def test_sub(self):
@@ -126,8 +126,8 @@ class OperatorTest(unittest.TestCase):
         outputs = [tritonhttpclient.InferRequestedOutput(output_name)]
         expected_output_data = input0_data - input1_data
 
-        log.debug("input0 data: {}".format(input0_data))
-        log.debug("input1 data: {}".format(input1_data))
+        log.debug(f"input0 data: {input0_data}")
+        log.debug(f"input1 data: {input1_data}")
 
         try:
             result = self.client.infer(model_name=model_name,
@@ -138,11 +138,11 @@ class OperatorTest(unittest.TestCase):
             output_data = result.as_numpy(output_name)
             self.assertTrue(
                 np.array_equal(output_data, expected_output_data),
-                "Expect response to have value {}, got {}".format(
-                    expected_output_data, output_data))
-            log.debug("output data: {}".format(output_data))
+                f"Expect response to have value {expected_output_data}, got {output_data}",
+            )
+            log.debug(f"output data: {output_data}")
         except InferenceServerException as ex:
-            self.assertTrue(False, "unexpected error {}".format(ex))
+            self.assertTrue(False, f"unexpected error {ex}")
         log.debug("====== end of test_sub ======")
 
     def test_mul(self):
@@ -165,7 +165,7 @@ class OperatorTest(unittest.TestCase):
         outputs = [tritonhttpclient.InferRequestedOutput(output_name)]
         expected_output_data = input_data * input_data
 
-        log.debug("input data: {}".format(input_data))
+        log.debug(f"input data: {input_data}")
 
         try:
             result = self.client.infer(model_name=model_name,
@@ -176,11 +176,11 @@ class OperatorTest(unittest.TestCase):
             output_data = result.as_numpy(output_name)
             self.assertTrue(
                 np.array_equal(output_data, expected_output_data),
-                "Expect response to have value {}, got {}".format(
-                    expected_output_data, output_data))
-            log.debug("output data: {}".format(output_data))
+                f"Expect response to have value {expected_output_data}, got {output_data}",
+            )
+            log.debug(f"output data: {output_data}")
         except InferenceServerException as ex:
-            self.assertTrue(False, "unexpected error {}".format(ex))
+            self.assertTrue(False, f"unexpected error {ex}")
         log.debug("====== end of test_mul ======")
 
     def test_tanh(self):
@@ -198,7 +198,7 @@ class OperatorTest(unittest.TestCase):
         output_name = 'output'
         outputs = [tritonhttpclient.InferRequestedOutput(output_name)]
 
-        log.debug("input data: {}".format(input_data))
+        log.debug(f"input data: {input_data}")
         expected_output_data = np.tanh(input_data)
 
         try:
@@ -210,11 +210,11 @@ class OperatorTest(unittest.TestCase):
             output_data = result.as_numpy(output_name)
             self.assertTrue(
                 np.array_equal(output_data, expected_output_data),
-                "Expect response to have value {}, got {}".format(
-                    expected_output_data, output_data))
-            log.debug("output data: {}".format(input_data))
+                f"Expect response to have value {expected_output_data}, got {output_data}",
+            )
+            log.debug(f"output data: {input_data}")
         except InferenceServerException as ex:
-            self.assertTrue(False, "unexpected error {}".format(ex))
+            self.assertTrue(False, f"unexpected error {ex}")
         log.debug("====== end of test_tanh ======")
 
     def test_reciprocal(self):
@@ -233,7 +233,7 @@ class OperatorTest(unittest.TestCase):
         output_name = 'output'
         outputs = [tritonhttpclient.InferRequestedOutput(output_name)]
 
-        log.debug("input data: {}".format(input_data))
+        log.debug(f"input data: {input_data}")
         expected_output_data = np.reciprocal(input_data)
 
         try:
@@ -245,11 +245,11 @@ class OperatorTest(unittest.TestCase):
             output_data = result.as_numpy(output_name)
             self.assertTrue(
                 np.array_equal(output_data, expected_output_data),
-                "Expect response to have value {}, got {}".format(
-                    expected_output_data, output_data))
-            log.debug("output data: {}".format(input_data))
+                f"Expect response to have value {expected_output_data}, got {output_data}",
+            )
+            log.debug(f"output data: {input_data}")
         except InferenceServerException as ex:
-            self.assertTrue(False, "unexpected error {}".format(ex))
+            self.assertTrue(False, f"unexpected error {ex}")
         log.debug("====== end of test_reciprocal ======")
 
     def test_sqrt(self):
@@ -267,7 +267,7 @@ class OperatorTest(unittest.TestCase):
         output_name = 'output'
         outputs = [tritonhttpclient.InferRequestedOutput(output_name)]
 
-        log.debug("input data: {}".format(input_data))
+        log.debug(f"input data: {input_data}")
         expected_output_data = np.sqrt(input_data)
 
         try:
@@ -279,11 +279,11 @@ class OperatorTest(unittest.TestCase):
             output_data = result.as_numpy(output_name)
             self.assertTrue(
                 np.array_equal(output_data, expected_output_data),
-                "Expect response to have value {}, got {}".format(
-                    expected_output_data, output_data))
-            log.debug("output data: {}".format(input_data))
+                f"Expect response to have value {expected_output_data}, got {output_data}",
+            )
+            log.debug(f"output data: {input_data}")
         except InferenceServerException as ex:
-            self.assertTrue(False, "unexpected error {}".format(ex))
+            self.assertTrue(False, f"unexpected error {ex}")
         log.debug("====== end of test_sqrt ======")
 
     def test_cast(self):
@@ -302,7 +302,7 @@ class OperatorTest(unittest.TestCase):
         output_name = 'output'
         outputs = [tritonhttpclient.InferRequestedOutput(output_name)]
 
-        log.debug("input data: {}".format(input_data))
+        log.debug(f"input data: {input_data}")
         expected_output_data = input_data.astype(np.double, copy=True)
 
         try:
@@ -314,11 +314,11 @@ class OperatorTest(unittest.TestCase):
             output_data = result.as_numpy(output_name)
             self.assertTrue(
                 np.array_equal(output_data, expected_output_data),
-                "Expect response to have value {}, got {}".format(
-                    expected_output_data, output_data))
-            log.debug("output data: {}".format(input_data))
+                f"Expect response to have value {expected_output_data}, got {output_data}",
+            )
+            log.debug(f"output data: {input_data}")
         except InferenceServerException as ex:
-            self.assertTrue(False, "unexpected error {}".format(ex))
+            self.assertTrue(False, f"unexpected error {ex}")
         log.debug("====== end of test_cast ======")
 
     def test_softmax(self):
@@ -336,7 +336,7 @@ class OperatorTest(unittest.TestCase):
         output_name = 'output'
         outputs = [tritonhttpclient.InferRequestedOutput(output_name)]
 
-        log.debug("input data: {}".format(input_data))
+        log.debug(f"input data: {input_data}")
         expected_output_data = helper.softmax(input_data, 0)
 
         try:
@@ -348,11 +348,11 @@ class OperatorTest(unittest.TestCase):
             output_data = result.as_numpy(output_name)
             self.assertTrue(
                 np.allclose(output_data, expected_output_data, atol=1e-07),
-                "Expect response to have value {}, got {}".format(
-                    expected_output_data, output_data))
-            log.debug("output data: {}".format(input_data))
+                f"Expect response to have value {expected_output_data}, got {output_data}",
+            )
+            log.debug(f"output data: {input_data}")
         except InferenceServerException as ex:
-            self.assertTrue(False, "unexpected error {}".format(ex))
+            self.assertTrue(False, f"unexpected error {ex}")
         log.debug("====== end of test_softmax ======")
 
     def test_softmax_default_axis(self):
@@ -370,7 +370,7 @@ class OperatorTest(unittest.TestCase):
         output_name = 'output'
         outputs = [tritonhttpclient.InferRequestedOutput(output_name)]
 
-        log.debug("input data: {}".format(input_data))
+        log.debug(f"input data: {input_data}")
         expected_output_data = helper.softmax(input_data, 1)
 
         try:
@@ -382,11 +382,11 @@ class OperatorTest(unittest.TestCase):
             output_data = result.as_numpy(output_name)
             self.assertTrue(
                 np.allclose(output_data, expected_output_data, atol=1e-07),
-                "Expect response to have value {}, got {}".format(
-                    expected_output_data, output_data))
-            log.debug("output data: {}".format(input_data))
+                f"Expect response to have value {expected_output_data}, got {output_data}",
+            )
+            log.debug(f"output data: {input_data}")
         except InferenceServerException as ex:
-            self.assertTrue(False, "unexpected error {}".format(ex))
+            self.assertTrue(False, f"unexpected error {ex}")
         log.debug("====== end of test_softmax_default_axis ======")
 
 

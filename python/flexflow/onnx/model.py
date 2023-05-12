@@ -55,19 +55,14 @@ class ONNXTensor(object):
 
 class ONNXModel(object):
     def __init__(self, filename):
-        if type(filename) == str:
-            model = onnx.load(filename)
-        else:
-            model = filename
+        model = onnx.load(filename) if type(filename) == str else filename
         # for node in model.graph.node:
         #     print(node)
         self.inputs = {}
         for input in model.graph.input:
             tensor = ONNXTensor(input.name, input.type.tensor_type.shape.dim, 1)
             self.inputs[input.name] = tensor
-        self.outputs = {}
-        for output in model.graph.output:
-            self.outputs[output.name] = output
+        self.outputs = {output.name: output for output in model.graph.output}
         self.model = model
         self.symbol_table = {}
 
@@ -76,7 +71,9 @@ class ONNXModel(object):
         input1 = self.symbol_table[node.input[1]]
         output = ffmodel.add(input0, input1, name=node.name)
         self.symbol_table[node.output[0]] = output
-        logging.debug("ffmodel.add({}, {}, name={})".format(node.input[0], node.input[1], node.name))
+        logging.debug(
+            f"ffmodel.add({node.input[0]}, {node.input[1]}, name={node.name})"
+        )
         
     def handleSub(self, ffmodel, node):
         print(node)
@@ -84,34 +81,37 @@ class ONNXModel(object):
         input1 = self.symbol_table[node.input[1]]
         output = ffmodel.subtract(input0, input1, name=node.name)
         self.symbol_table[node.output[0]] = output
-        logging.debug("ffmodel.subtract({}, {}, name={})".format(node.input[0], node.input[1], node.name))
+        logging.debug(
+            f"ffmodel.subtract({node.input[0]}, {node.input[1]}, name={node.name})"
+        )
         
     def handleMul(self, ffmodel, node):
         input0 = self.symbol_table[node.input[0]]
         input1 = self.symbol_table[node.input[1]]
         output = ffmodel.multiply(input0, input1, name=node.name)
         self.symbol_table[node.output[0]] = output
-        logging.debug("ffmodel.multiply({}, {}, name={})".format(node.input[0], node.input[1], node.name))
+        logging.debug(
+            f"ffmodel.multiply({node.input[0]}, {node.input[1]}, name={node.name})"
+        )
 
     def handleConcat(self, ffmodel, node):
         inputs = [self.symbol_table[i] for i in node.input]
         attribute = {x.name: x for x in node.attribute}
         output = ffmodel.concat(tensors=inputs, axis=attribute['axis'].i, name=node.name)
         self.symbol_table[node.output[0]] = output
-        logging.debug("ffmodel.concat([{}], {}, name={})".format(', '.join(node.input), attribute['axis'].i, node.name))
+        logging.debug(
+            f"ffmodel.concat([{', '.join(node.input)}], {attribute['axis'].i}, name={node.name})"
+        )
 
     def handleSplit(self, ffmodel, node):
         input = self.symbol_table[node.input[0]]
         attribute = {x.name: x for x in node.attribute}
         split = list(attribute['split'].ints)
-        if 'axis' in attribute:
-            axis = attribute['axis'].i
-        else:
-            axis = 0
+        axis = attribute['axis'].i if 'axis' in attribute else 0
         outputs = ffmodel.split(input=input, sizes=split, axis=axis, name=node.name)
         for i, output in enumerate(outputs):
             self.symbol_table[node.output[i]] = output
-        logging.debug("ffmodel.split({}, {}, {})".format(node.input[0], split, axis))
+        logging.debug(f"ffmodel.split({node.input[0]}, {split}, {axis})")
 
     def handleAveragePool(self, ffmodel, node):
         input = self.symbol_table[node.input[0]]
@@ -121,30 +121,34 @@ class ONNXModel(object):
         if "pads" in attribute:
             padding = attribute["pads"].ints
         elif "auto_pad" in attribute:
-            if attribute["auto_pad"].s == b'VALID':
-                padding = [0, 0]
-            elif attribute["auto_pad"].s == b'SAME':
+            if attribute["auto_pad"].s == b'SAME':
                 # TODO
                 assert 0
+            elif attribute["auto_pad"].s == b'VALID':
+                padding = [0, 0]
             else:
                 assert 0, "Unknown auto_pad"
         else:
             assert 0, "padding is missing"
         output = ffmodel.pool2d(input, kernel[0], kernel[1], stride[0], stride[1], padding[0], padding[1], PoolType.POOL_AVG, name=node.name)
         self.symbol_table[node.output[0]] = output
-        logging.debug("ffmodel.pool2d({}, {}, {}, {}, {}, {}, {}, PoolType.POOL_AVG, name={})".format(node.input[0], kernel[0], kernel[1], stride[0], stride[1], padding[0], padding[1], node.name))
+        logging.debug(
+            f"ffmodel.pool2d({node.input[0]}, {kernel[0]}, {kernel[1]}, {stride[0]}, {stride[1]}, {padding[0]}, {padding[1]}, PoolType.POOL_AVG, name={node.name})"
+        )
 
     def handleGlobalAveragePool(self,ffmodel,node):
         input = self.symbol_table[node.input[0]]
         output = ffmodel.pool2d(input, input.dims[2], input.dims[3], 1, 1, 0, 0, PoolType.POOL_AVG, name=node.name)
         self.symbol_table[node.output[0]] = output
-        logging.debug("ffmodel.pool2d({}, {}, {}, {}, {}, {}, {}, PoolType.POOL_AVG, name={})".format(node.input[0], input.dims[2], input.dims[3], 1, 1, 0, 0, node.name))
+        logging.debug(
+            f"ffmodel.pool2d({node.input[0]}, {input.dims[2]}, {input.dims[3]}, 1, 1, 0, 0, PoolType.POOL_AVG, name={node.name})"
+        )
 
     def handleBatchNormalization(self, ffmodel, node):
         input = self.symbol_table[node.input[0]]
         output = ffmodel.batch_norm(input)
         self.symbol_table[node.output[0]] = output
-        logging.debug("ffmodel.batch_norm({})".format(node.input[0]))
+        logging.debug(f"ffmodel.batch_norm({node.input[0]})")
 
     def handleConv(self, ffmodel, node):
         input = self.symbol_table[node.input[0]]
@@ -154,11 +158,11 @@ class ONNXModel(object):
         if "pads" in attribute:
             padding = attribute["pads"].ints
         elif "auto_pad" in attribute:
-            if attribute["auto_pad"].s == b'VALID':
-                padding = [0, 0]
-            elif attribute["auto_pad"].s == b'SAME':
+            if attribute["auto_pad"].s == b'SAME':
                 # TODO
                 assert 0
+            elif attribute["auto_pad"].s == b'VALID':
+                padding = [0, 0]
             else:
                 assert 0, "Unknown auto_pad"
         else:
@@ -167,7 +171,9 @@ class ONNXModel(object):
         out_channels = self.inputs[node.input[1]].dims[0]
         output = ffmodel.conv2d(input, out_channels, kernel[0], kernel[1], stride[0], stride[1], padding[0], padding[1], ActiMode.AC_MODE_NONE, group, name=node.name)
         self.symbol_table[node.output[0]] = output
-        logging.debug("ffmodel.conv2d({}, {}, {}, {}, {}, {}, {}, {}, name={})".format(node.input[0], out_channels, kernel[0], kernel[1], stride[0], stride[1], padding[0], padding[1], node.name))
+        logging.debug(
+            f"ffmodel.conv2d({node.input[0]}, {out_channels}, {kernel[0]}, {kernel[1]}, {stride[0]}, {stride[1]}, {padding[0]}, {padding[1]}, name={node.name})"
+        )
 
     def handleDropout(self, ffmodel, node):
         input = self.symbol_table[node.input[0]]
@@ -176,13 +182,13 @@ class ONNXModel(object):
         seed = 0
         output = ffmodel.dropout(input, rate, 0)
         self.symbol_table[node.output[0]] = output
-        logging.debug("ffmodel.dropout({}, {})".format(node.input[0], rate))
+        logging.debug(f"ffmodel.dropout({node.input[0]}, {rate})")
 
     def handleFlatten(self, ffmodel, node):
         input = self.symbol_table[node.input[0]]
         output = ffmodel.flat(input, name=node.name)
         self.symbol_table[node.output[0]] = output
-        logging.debug("ffmodel.flat({})".format(node.input[0]))
+        logging.debug(f"ffmodel.flat({node.input[0]})")
 
     # def handleGemm(self, ffmodel, node):
     #     input = self.symbol_table[node.input[0]]
@@ -197,7 +203,7 @@ class ONNXModel(object):
         dim = attribute["out_dim"].i
         output = ffmodel.dense(input, dim, name=node.name)
         self.symbol_table[node.output[0]] = output
-        logging.debug("ffmodel.dense({}, {}, name={})".format(node.input[0], dim, node.name))
+        logging.debug(f"ffmodel.dense({node.input[0]}, {dim}, name={node.name})")
 
     def handleMaxPool(self, ffmodel, node):
         input = self.symbol_table[node.input[0]]
@@ -207,24 +213,26 @@ class ONNXModel(object):
         if "pads" in attribute:
             padding = attribute["pads"].ints
         elif "auto_pad" in attribute:
-            if attribute["auto_pad"].s == b'VALID':
-                padding = [0, 0]
-            elif attribute["auto_pad"].s == b'SAME':
+            if attribute["auto_pad"].s == b'SAME':
                 # TODO
                 assert 0
+            elif attribute["auto_pad"].s == b'VALID':
+                padding = [0, 0]
             else:
                 assert 0, "Unknown auto_pad"
         else:
             assert 0, "padding is missing"
         output = ffmodel.pool2d(input, kernel[0], kernel[1], stride[0], stride[1], padding[0], padding[1], name=node.name)
         self.symbol_table[node.output[0]] = output
-        logging.debug("ffmodel.pool2d({}, {}, {}, {}, {}, {}, {}, PoolType.POOL_MAX, name={})".format(node.input[0], kernel[0], kernel[1], stride[0], stride[1], padding[0], padding[1], node.name))
+        logging.debug(
+            f"ffmodel.pool2d({node.input[0]}, {kernel[0]}, {kernel[1]}, {stride[0]}, {stride[1]}, {padding[0]}, {padding[1]}, PoolType.POOL_MAX, name={node.name})"
+        )
 
     def handleRelu(self, ffmodel, node):
         input = self.symbol_table[node.input[0]]
         output = ffmodel.relu(input, name=node.name)
         self.symbol_table[node.output[0]] = output
-        logging.debug("ffmodel.relu({})".format(node.input[0]))
+        logging.debug(f"ffmodel.relu({node.input[0]})")
 
     def handlePad(self, ffmodel, node):
         input = self.symbol_table[node.input[0]]
@@ -236,20 +244,22 @@ class ONNXModel(object):
         input = self.symbol_table[node.input[0]]
         output = ffmodel.softmax(input, name=node.name)
         self.symbol_table[node.output[0]] = output
-        logging.debug("ffmodel.softmax({}, name={})".format(node.input[0], node.name))
+        logging.debug(f"ffmodel.softmax({node.input[0]}, name={node.name})")
 
     def handleReshape(self, ffmodel, node):
         input = self.symbol_table[node.input[0]]
         shape = self.symbol_table[node.input[1]]
         output = ffmodel.reshape(input, list(shape.int64_data), name=node.name)
         self.symbol_table[node.output[0]] = output
-        logging.debug("ffmodel.reshape({}, {}, name={})".format(node.input[0], list(shape.int64_data), node.name))
+        logging.debug(
+            f"ffmodel.reshape({node.input[0]}, {list(shape.int64_data)}, name={node.name})"
+        )
     
     def handleCast(self, ffmodel, node):
         # TODO: add cast
         input = self.symbol_table[node.input[0]]
         self.symbol_table[node.output[0]] = input
-        logging.warning("Not implemented handle: {}".format(node.op_type))
+        logging.warning(f"Not implemented handle: {node.op_type}")
         
     def handleUnsqueeze(self, ffmodel, node):
         # TODO: add unsqueeze
@@ -257,7 +267,7 @@ class ONNXModel(object):
         attribute = {x.name: x for x in node.attribute}
         axes = attribute["axes"].ints
         self.symbol_table[node.output[0]] = input
-        logging.warning("Not implemented handle: {}".format(node.op_type))
+        logging.warning(f"Not implemented handle: {node.op_type}")
         
     def handleConstant(self, ffmodel, node):
         attribute = {x.name: x for x in node.attribute}
@@ -271,7 +281,7 @@ class ONNXModel(object):
         if len(tensor.dims) != 0:
             #TODO: this path has not tested
             output = ffmodel.create_constant(tensor,dims, value[0], data_type)
-            logging.warning("ffmodel.create_constant: {}, {}, {}".format(dims, value[0], data_type))
+            logging.warning(f"ffmodel.create_constant: {dims}, {value[0]}, {data_type}")
         else:
             output = value[0]
         self.symbol_table[node.output[0]] = output
@@ -282,7 +292,7 @@ class ONNXModel(object):
         limit = self.symbol_table[node.input[1]]
         delta = self.symbol_table[node.input[2]]
         self.symbol_table[node.output[0]] = start
-        logging.warning("Not implemented handle: {}".format(node.op_type))
+        logging.warning(f"Not implemented handle: {node.op_type}")
 
     def apply(self, ffmodel, input_dict):
         self._fusion()
@@ -291,18 +301,18 @@ class ONNXModel(object):
         # for initializer in self.model.graph.initializer:
         #     self.symbol_table[initializer.name] = initializer
         for node in self.model.graph.node:
-            handler_name = 'handle' + node.op_type
+            handler_name = f'handle{node.op_type}'
             if hasattr(self, handler_name):
                 handler = getattr(self, handler_name)
                 handler(ffmodel, node)
             else:
-                logging.warning("Can't handle: {}".format(node.op_type))
-                #assert 0
+                logging.warning(f"Can't handle: {node.op_type}")
+                        #assert 0
         return self.symbol_table[self.model.graph.output[0].name]
         
     def _fusion(self):
         flag = True
-        while flag == True:
+        while flag:
             idx = 0
             flag_found = False
             for node in self.model.graph.node:
@@ -321,7 +331,7 @@ class ONNXModel(object):
                         self.model.graph.node.remove(add_node)
                         self.model.graph.node.remove(node)
                         break
-                
+
                 elif node.op_type == 'Gemm':
                     flag_found = True
                     dim = self.inputs[node.input[1]].dims[0]
@@ -329,10 +339,10 @@ class ONNXModel(object):
                     self.model.graph.node.insert(idx, dense_node)
                     self.model.graph.node.remove(node)
                     break
-                    
+
                 idx += 1
             flag = flag_found
-        
+
         for node in self.model.graph.node:
             print(node)
         
@@ -340,10 +350,11 @@ class ONNXModelKeras(ONNXModel):
     def __init__(self, filename, ffconfig=None, ffmodel=None):
         super(ONNXModelKeras, self).__init__(filename)
         for initializer in self.model.graph.initializer:
-            if ('/bias' in initializer.name or '/BiasAdd/ReadVariableOp' in initializer.name )and 'dense' in initializer.name:
-                # self.symbol_table[initializer.name] = self._create_initializer_tensor(ffconfig, ffmodel, initializer)
-                pass
-            else:
+            if (
+                '/bias' not in initializer.name
+                and '/BiasAdd/ReadVariableOp' not in initializer.name
+                or 'dense' not in initializer.name
+            ):
                 tensor = ONNXTensor(initializer.name, initializer.dims, 2)
                 self.inputs[initializer.name] = tensor
         
@@ -358,7 +369,7 @@ class ONNXModelKeras(ONNXModel):
     def handleTranspose(self, ffmodel, node):
         input = self.symbol_table[node.input[0]]
         self.symbol_table[node.output[0]] = input
-        logging.debug("ffmodel.tranpose({})".format(node.input[0]))
+        logging.debug(f"ffmodel.tranpose({node.input[0]})")
         
     def handleReshape(self, ffmodel, node):
         print("########################################I am in Keras Reshape")

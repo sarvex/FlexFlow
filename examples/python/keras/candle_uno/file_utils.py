@@ -42,7 +42,7 @@ else:
 def get_file(fname, origin, untar=False,
              #md5_hash=None, datadir='../Data/common'):
              #md5_hash=None, cache_subdir='common', datadir='../Data/common'):
-             md5_hash=None, cache_subdir='common', datadir=None): # datadir argument was never actually used so changing it to None
+             md5_hash=None, cache_subdir='common', datadir=None):    # datadir argument was never actually used so changing it to None
     """ Downloads a file from a URL if it not already in the cache.
         Passing the MD5 hash will verify the file after download as well
         as if it is already present in the cache.
@@ -95,11 +95,10 @@ def get_file(fname, origin, untar=False,
     download = False
     if os.path.exists(fpath) or (untar_fpath is not None and os.path.exists(untar_fpath)):
         # file found; verify integrity if a hash was provided
-        if md5_hash is not None:
-            if not validate_file(fpath, md5_hash):
-                print('A local file was found, but it seems to be '
-                      'incomplete or outdated.')
-                download = True
+        if md5_hash is not None and not validate_file(fpath, md5_hash):
+            print('A local file was found, but it seems to be '
+                  'incomplete or outdated.')
+            download = True
     else:
         download = True
 
@@ -153,8 +152,6 @@ def get_file(fname, origin, untar=False,
                 raise
             tfile.close()
         return untar_fpath
-        print()
-
     return fpath
 
 
@@ -177,7 +174,4 @@ def validate_file(fpath, md5_hash):
     with open(fpath, 'rb') as f:
         buf = f.read()
         hasher.update(buf)
-    if str(hasher.hexdigest()) == str(md5_hash):
-        return True
-    else:
-        return False
+    return hasher.hexdigest() == str(md5_hash)

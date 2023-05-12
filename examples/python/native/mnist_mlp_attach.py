@@ -91,21 +91,17 @@ def top_level_task():
   epochs = ffconfig.epochs
 
   ts_start = ffconfig.get_current_time()
-  for epoch in range(0,epochs):
-    ct = 0
+  for _ in range(0,epochs):
     ffmodel.reset_metrics()
     iterations = num_samples / ffconfig.batch_size
-    for iter in range(0, int(iterations)):
+    for ct, _ in enumerate(range(0, int(iterations))):
       #ffconfig.begin_trace(111)
       next_batch(ct, x_train, input_tensor, ffconfig, ffmodel)
       next_batch_label(ct, y_train, label_tensor, ffconfig, ffmodel)
-      ct += 1
       ffmodel.forward()
       ffmodel.zero_gradients()
       ffmodel.backward()
       ffmodel.update()
-      #ffconfig.end_trace(111)
-
   ts_end = ffconfig.get_current_time()
   run_time = 1e-6 * (ts_end - ts_start);
   print("epochs %d, ELAPSED TIME = %.4fs, THROUGHPUT = %.2f samples/s\n" %(epochs, run_time, num_samples * epochs / run_time));

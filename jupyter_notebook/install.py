@@ -44,10 +44,12 @@ def _delete_kernel(ksm, kernel_name, mute=True):
         spec = ksm.get_kernel_spec(kernel_name)
         shutil.rmtree(spec.resource_dir)
         if mute == False:
-            print("Find existing kernel:" + kernel_name + ", delete it before installation.")
+            print(f"Find existing kernel:{kernel_name}, delete it before installation.")
     except NoSuchKernel:
         if mute == False:
-            print("No existing kernel:" + kernel_name + " has been installed, continue to installation.")
+            print(
+                f"No existing kernel:{kernel_name} has been installed, continue to installation."
+            )
 
 # This internal method is used to install a kernel
 def _install_kernel(ksm, kernel_name, kernel_json, user, prefix, mute=True):
@@ -58,10 +60,19 @@ def _install_kernel(ksm, kernel_name, kernel_json, user, prefix, mute=True):
         try:
             ksm.install_kernel_spec(td, kernel_name, user=user, prefix=prefix)
             if mute == False:
-                print("IPython kernel: " + kernel_name + "(" + kernel_json["display_name"] + ") has been installed")
+                print(
+                    f"IPython kernel: {kernel_name}("
+                    + kernel_json["display_name"]
+                    + ") has been installed"
+                )
         except Exception as e:
             if mute == False:
-                log.error("Failed to install the IPython kernel: " +  kernel_name + "(" + kernel_json["display_name"] + ") with error: " + str(e))
+                log.error(
+                    f"Failed to install the IPython kernel: {kernel_name}("
+                    + kernel_json["display_name"]
+                    + ") with error: "
+                    + str(e)
+                )
 
 # This method parses the json file into a dict named cmd_dict
 def parse_json(flexflow_python_prefix,
@@ -84,25 +95,24 @@ def parse_json(flexflow_python_prefix,
         cmd_dict = json.load(json_file)
         for key in required_cmd_dict_key:
             if key not in cmd_dict:
-                assert 0, "Key: " + key + " is not existed."
+                assert 0, f"Key: {key} is not existed."
     # Criterion
     #   if entry in the json file is set to null, we load it from the cmd line
     args = inspect.getfullargspec(parse_json)
-    keys = args.args[0: len(args.args)-1]
+    keys = args.args[:-1]
     sig = inspect.signature(parse_json)
     argv_dict = locals()
     for key in keys:
         if key == "launcher":
-            if cmd_dict[key]["value"] == None and argv_dict[key] != "none":
+            if cmd_dict[key]["value"] is None and argv_dict[key] != "none":
                 cmd_dict[key]["value"] = argv_dict[key]
-            if cmd_dict[key]["launcher_extra"] == None:
-                cmd_dict[key]["launcher_extra"] = list()
-        elif key == "flexflow_python_prefix" or key == "kernel_name":
-            if cmd_dict[key] == None:
+            if cmd_dict[key]["launcher_extra"] is None:
+                cmd_dict[key]["launcher_extra"] = []
+        elif key in ["flexflow_python_prefix", "kernel_name"]:
+            if cmd_dict[key] is None:
                 cmd_dict[key] = argv_dict[key]
-        else:
-            if cmd_dict[key]["value"] == None:
-                cmd_dict[key]["value"] = argv_dict[key]
+        elif cmd_dict[key]["value"] is None:
+            cmd_dict[key]["value"] = argv_dict[key]
 
     return cmd_dict
 
@@ -117,7 +127,7 @@ def install_kernel_nocr(user, prefix, cmd_opts, cmd_dict, verbose, kernel_file_d
     kernel_json["display_name"] = cmd_dict["name"]
 
     # launcher
-    if cmd_dict["launcher"]["value"] == None:
+    if cmd_dict["launcher"]["value"] is None:
         kernel_json["display_name"] += "_SM"
     else:
         kernel_json["display_name"] += "_DM"
@@ -132,12 +142,12 @@ def install_kernel_nocr(user, prefix, cmd_opts, cmd_dict, verbose, kernel_file_d
         else:
             # use mpirun, srun and jsrun launcher
             ranks = nodes * ranks_per_node
-            if launcher == "mpirun":
+            if launcher == "jsrun":
+                kernel_json["argv"] = ["jsrun", "-n", str(ranks // ranks_per_node), "-r", "1", "-a", str(ranks_per_node)] + cmd_dict["launcher"]["launcher_extra"] + kernel_json["argv"]
+            elif launcher == "mpirun":
                 kernel_json["argv"] = ["mpirun", "-n", str(ranks), "--npernode", str(ranks_per_node)] + cmd_dict["launcher"]["launcher_extra"] + kernel_json["argv"]
             elif launcher == "srun":
                 kernel_json["argv"] = ["srun", "-n", str(ranks), "--ntasks-per-node", str(ranks_per_node)] + cmd_dict["launcher"]["launcher_extra"] + kernel_json["argv"]
-            elif launcher == "jsrun":
-                kernel_json["argv"] = ["jsrun", "-n", str(ranks // ranks_per_node), "-r", "1", "-a", str(ranks_per_node)] + cmd_dict["launcher"]["launcher_extra"] + kernel_json["argv"]
             else:
                 assert 0, "Unknown launcher"
 
@@ -170,24 +180,24 @@ def install_kernel_nocr(user, prefix, cmd_opts, cmd_dict, verbose, kernel_file_d
                 + str(cmd_dict["openmp"]["value"])
                 + "OpenMP processors with 0 threads"
             )
-    
+
     # utility
     if cmd_dict["utility"]["value"] > 0:
         kernel_json["argv"] += cmd_dict["utility"]["cmd"], str(cmd_dict["utility"]["value"])
-    
+
     # system memory
     if cmd_dict["sysmem"]["value"] > 0:
         kernel_json["argv"] += cmd_dict["sysmem"]["cmd"], str(cmd_dict["sysmem"]["value"])
-    
+
     # register memory
     if cmd_dict["regmem"]["value"] > 0:
         kernel_json["argv"] += cmd_dict["regmem"]["cmd"], str(cmd_dict["regmem"]["value"])
-    
+
     # other options from json
     if "other_options" in cmd_dict:
         other_options = cmd_dict["other_options"]
         for option in other_options:
-            if option["value"] == None:
+            if option["value"] is None:
                 kernel_json["argv"].append(option["cmd"])
             else:
                 kernel_json["argv"] += option["cmd"], str(option["value"])
@@ -224,10 +234,10 @@ def install_kernel_nocr(user, prefix, cmd_opts, cmd_dict, verbose, kernel_file_d
     _install_kernel(ksm, kernel_name, kernel_json, user, prefix, False)
 
     # copy legion_kernel_nocr.py into kernel dir
-    if kernel_file_dir == None:
-        file_path = os.getcwd() + "/" + kernel_filename
+    if kernel_file_dir is None:
+        file_path = f"{os.getcwd()}/{kernel_filename}"
     else:
-        file_path = kernel_file_dir + "/" + kernel_filename
+        file_path = f"{kernel_file_dir}/{kernel_filename}"
     shutil.copy(file_path, kernel_install_dir)
 
 def parse_args(argv=None):

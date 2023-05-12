@@ -32,22 +32,16 @@ ff_tracing_id = 200
 warnings.simplefilter('always', DeprecationWarning)
 
 def get_c_name(name):
-  if name is None:
-    return ffi.NULL
-  else:
-    return ffi.new("char[]", name.encode('ascii'))
+  return ffi.NULL if name is None else ffi.new("char[]", name.encode('ascii'))
 
 def get_datatype_size(datatype):
-  if (datatype == DataType.DT_FLOAT):
+  if ((datatype == DataType.DT_FLOAT)
+      or datatype != DataType.DT_DOUBLE and (datatype == DataType.DT_INT32)):
     return 4
-  elif (datatype == DataType.DT_DOUBLE):
-    return 8
-  elif (datatype == DataType.DT_INT32):
-    return 4
-  elif (datatype == DataType.DT_INT64):
+  elif datatype in [DataType.DT_DOUBLE, DataType.DT_INT64]:
     return 8
   else:
-    assert 0, "unknow datatype" + str(datatype)
+    assert 0, f"unknow datatype{str(datatype)}"
     return 0
 
 # -----------------------------------------------------------------------
@@ -516,7 +510,7 @@ def convert_op_handle_to_op(op_type, handle, idx=None, name=None):
   elif op_type == OpType.GATHER:
     return Gather(handle, idx, name)
   else:
-    assert 0, "unknown layer type {}".format(op_type)
+    assert 0, f"unknown layer type {op_type}"
     return None
 
 # -----------------------------------------------------------------------
@@ -572,16 +566,13 @@ class FFConfig(object):
 class Tensor(object):
   __slots__ = ['p_handle', 'handle', '_handle', 'num_dims', 'dims', 'data_type', 'owner_op', 'mapped']
   def __init__(self, handle, deallocate=True, owner_op_type=None, p_handle=None):
-    if handle == None and ffi.typeof(p_handle) == ffi.typeof('flexflow_tensor_t*'):
+    if handle is None and ffi.typeof(p_handle) == ffi.typeof(
+        'flexflow_tensor_t*'):
       self.p_handle = p_handle
       self.handle = self.p_handle[0]
     elif handle != None and ffi.typeof(handle) == ffi.typeof('flexflow_tensor_t'):
       self.p_handle = 0
       self.handle = handle
-    #elif handle != None and ffi.typeof(handle) == ffi.typeof('flexflow_tensor_t'):
-    #  self.p_handle = ffi.new('flexflow_tensor_t *')
-    #  self.p_handle.impl = handle.impl
-    #  self.handle = self.p_handle[0]
     else:
       assert 0, "Tensor handle is wrong"
     self.num_dims = 0
@@ -620,9 +611,7 @@ class Tensor(object):
     else:
       assert 0, "unknow num_dims"
     initializer = RegionNdarray(shape, self.data_type, raw_ptr_int, strides, False)
-    array = np.asarray(initializer)
-    # print("stride", array.__array_interface__['strides'])
-    return array
+    return np.asarray(initializer)
 
   def get_flat_array(self, ffmodel, ffconfig):
     assert self.mapped == True, "Tensor is not mapped."
@@ -636,11 +625,11 @@ class Tensor(object):
     else:
       assert 0, "unknown num_dims"
     initializer = RegionNdarray(shape, self.data_type, raw_ptr_int, strides, False)
-    array = np.asarray(initializer)
-    return array
+    return np.asarray(initializer)
 
   def attach_numpy_array(self, ffmodel, ffconfig, np_array):
-    assert np_array.__array_interface__['strides'] == None, "numpy array strides is not None"
+    assert (np_array.__array_interface__['strides'] is
+            None), "numpy array strides is not None"
     np_shape = np_array.shape
     num_dims = len(np_shape)
     assert num_dims == self.num_dims, "please check dims (%d == %d)" %(num_dims, self.num_dims)
@@ -648,7 +637,9 @@ class Tensor(object):
       assert np_shape[i] == self.dims[i], "please check shape dim %d (%d == %d)" %(i, np_shape[i], self.dims[i])
     np_raw_ptr = np_array.__array_interface__['data']
     raw_ptr = ffi.cast("void*", np_raw_ptr[0])
-    fflogger.debug("attach numpy array: %s, %s, %s" %( str(np_raw_ptr), str(raw_ptr), hex(np_raw_ptr[0])))
+    fflogger.debug(
+        f"attach numpy array: {str(np_raw_ptr)}, {str(raw_ptr)}, {hex(np_raw_ptr[0])}"
+    )
     self.__attach_raw_ptr(ffmodel, ffconfig, raw_ptr)
 
   def detach_numpy_array(self, ffconfig):
@@ -658,7 +649,8 @@ class Tensor(object):
     return ffc.flexflow_tensor_is_mapped(self.handle)
     
   def set_tensor(self, ffmodel, np_array):
-    assert np_array.__array_interface__['strides'] == None, "Parameter set_weights, numpy array strides is not None"
+    assert (np_array.__array_interface__['strides'] is
+            None), "Parameter set_weights, numpy array strides is not None"
     np_shape = np_array.shape
     num_dims = len(np_shape)
     assert num_dims == self.num_dims, "please check dims (%d == %d)" %(num_dims, self.num_dims)
@@ -676,7 +668,9 @@ class Tensor(object):
       ret_val = ffc.flexflow_tensor_set_tensor_int(self.handle, ffmodel.handle, num_dims, c_dims, raw_ptr)
     else:
       assert 0, "Unsupported datatype"
-    fflogger.debug("set tensor raw_ptr: %s, %s, %s, %s" %( str(raw_ptr), str(np_raw_ptr[0]), hex(np_raw_ptr[0]), str(np_shape)))
+    fflogger.debug(
+        f"set tensor raw_ptr: {str(raw_ptr)}, {str(np_raw_ptr[0])}, {hex(np_raw_ptr[0])}, {str(np_shape)}"
+    )
     assert ret_val == True, ret_val
     
   def get_tensor(self, ffmodel):
@@ -699,7 +693,9 @@ class Tensor(object):
     elif np_array.dtype == np.int64:
       raw_ptr = ffi.cast("int64_t*", np_raw_ptr[0])
       ret_val = ffc.flexflow_tensor_get_tensor_int64(self.handle, ffmodel.handle, raw_ptr, False)
-    fflogger.debug("get weights raw_ptr: %s, %s, %s, %s" %( str(raw_ptr), str(np_raw_ptr[0]), hex(np_raw_ptr[0]), str(shape)))
+    fflogger.debug(
+        f"get weights raw_ptr: {str(raw_ptr)}, {str(np_raw_ptr[0])}, {hex(np_raw_ptr[0])}, {str(shape)}"
+    )
     assert ret_val == True
     return np_array
 
@@ -724,7 +720,9 @@ class Tensor(object):
     elif np_array.dtype == np.int64:
       raw_ptr = ffi.cast("int64_t*", np_raw_ptr[0])
       ret_val = ffc.flexflow_tensor_get_tensor_int64(self.handle, ffmodel.handle, raw_ptr, True)
-    fflogger.debug("get weights raw_ptr: %s, %s, %s, %s" %( str(raw_ptr), str(np_raw_ptr[0]), hex(np_raw_ptr[0]), str(shape)))
+    fflogger.debug(
+        f"get weights raw_ptr: {str(raw_ptr)}, {str(np_raw_ptr[0])}, {hex(np_raw_ptr[0])}, {str(shape)}"
+    )
     assert ret_val == True
     return np_array
   
@@ -745,7 +743,9 @@ class Tensor(object):
       ret_val = ffc.flexflow_model_get_output_tensor_float(ffmodel.handle, self.handle, raw_ptr, True)
     else:
       assert 0, "unknown data type"
-    fflogger.debug("get weights raw_ptr: %s, %s, %s, %s" %( str(raw_ptr), str(np_raw_ptr[0]), hex(np_raw_ptr[0]), str(shape)))
+    fflogger.debug(
+        f"get weights raw_ptr: {str(raw_ptr)}, {str(np_raw_ptr[0])}, {hex(np_raw_ptr[0])}, {str(shape)}"
+    )
     assert ret_val == True
     return np_array
   
@@ -765,7 +765,9 @@ class Tensor(object):
       ret_val = ffc.flexflow_model_get_output_tensor_float(ffmodel.handle, self.handle, raw_ptr, False)
     else:
       assert 0, "unknown data type"
-    fflogger.debug("get weights raw_ptr: %s, %s, %s, %s" %( str(raw_ptr), str(np_raw_ptr[0]), hex(np_raw_ptr[0]), str(shape)))
+    fflogger.debug(
+        f"get weights raw_ptr: {str(raw_ptr)}, {str(np_raw_ptr[0])}, {hex(np_raw_ptr[0])}, {str(shape)}"
+    )
     assert ret_val == True
     return np_array
 
@@ -808,20 +810,20 @@ class Tensor(object):
 
   def __get_data_type(self):
     dtype = ffc.flexflow_tensor_get_data_type(self.handle)
-    if (dtype == 40):
+    if dtype == 40:
       self.data_type = DataType.DT_BOOLEAN
-    elif (dtype == 41):
+    elif dtype == 41:
       self.data_type = DataType.DT_INT32
-    elif (dtype == 42):
+    elif dtype == 42:
       self.data_type = DataType.DT_INT64
-    elif (dtype == 43):
+    elif dtype == 43:
       self.data_type = DataType.DT_HALF
-    elif (dtype == 44):
+    elif dtype == 44:
       self.data_type = DataType.DT_FLOAT
-    elif (dtype == 45):
+    elif dtype == 45:
       self.data_type = DataType.DT_DOUBLE
     else:
-      assert 0, "unknown data type {}".format(dtype)
+      assert 0, f"unknown data type {dtype}"
 
   def __get_owner_op(self, op_type):
     op_handle = ffc.flexflow_tensor_get_owner_op(self.handle)
@@ -852,7 +854,8 @@ class Parameter(Tensor):
     super(Parameter, self).__init__(self.parameter_handle, deallocate=False)
 
   def set_weights(self, ffmodel, np_array):
-    assert np_array.__array_interface__['strides'] == None, "Parameter set_weights, numpy array strides is not None"
+    assert (np_array.__array_interface__['strides'] is
+            None), "Parameter set_weights, numpy array strides is not None"
     np_shape = np_array.shape
     num_dims = len(np_shape)
     assert num_dims == self.num_dims, "please check dims (%d == %d)" %(num_dims, self.num_dims)
@@ -862,7 +865,9 @@ class Parameter(Tensor):
     c_dims = ffi.new("int[]", self.dims)
     np_raw_ptr = np_array.__array_interface__['data']
     raw_ptr = ffi.cast("float*", np_raw_ptr[0])
-    fflogger.debug("set weights raw_ptr: %s, %s, %s, %s" %( str(raw_ptr), str(np_raw_ptr[0]), hex(np_raw_ptr[0]), str(np_shape)))
+    fflogger.debug(
+        f"set weights raw_ptr: {str(raw_ptr)}, {str(np_raw_ptr[0])}, {hex(np_raw_ptr[0])}, {str(np_shape)}"
+    )
     ret_val = ffc.flexflow_tensor_set_tensor_float(self.parameter_handle, ffmodel.handle, num_dims, c_dims, raw_ptr)
     assert ret_val == True, ret_val
 
@@ -871,7 +876,9 @@ class Parameter(Tensor):
     np_array = np.empty(shape, dtype=np.float32)
     np_raw_ptr = np_array.__array_interface__['data']
     raw_ptr = ffi.cast("float*", np_raw_ptr[0])
-    fflogger.debug("get weights raw_ptr: %s, %s, %s, %s" %( str(raw_ptr), str(np_raw_ptr[0]), hex(np_raw_ptr[0]), str(shape)))
+    fflogger.debug(
+        f"get weights raw_ptr: {str(raw_ptr)}, {str(np_raw_ptr[0])}, {hex(np_raw_ptr[0])}, {str(shape)}"
+    )
     ret_val = ffc.flexflow_tensor_get_tensor_float(self.parameter_handle, ffmodel.handle, raw_ptr, False)
     assert ret_val == True
     return np_array
@@ -894,7 +901,7 @@ class FFModel(object):
     """
     self.handle = ffc.flexflow_model_create(ffconfig.handle)
     self._handle = ffi.gc(self.handle, ffc.flexflow_model_destroy)
-    self._layers = dict()
+    self._layers = {}
     self._nb_layers = 0
     self._ffconfig = ffconfig
     global ff_tracing_id
@@ -1531,11 +1538,9 @@ class FFModel(object):
     :returns:  Tensor -- the output tensor.
     """
     assert type(tensors) is list, "tensors should be a list"
-    tensor_handle_list = []
     n = len(tensors)
     assert n <= 256, "Please increase MAX_NUM_INPUTS"
-    for tensor in tensors:
-      tensor_handle_list.append(tensor.handle)
+    tensor_handle_list = [tensor.handle for tensor in tensors]
     c_tensor_handle_list = ffi.new("flexflow_tensor_t[]", tensor_handle_list)
     c_name = get_c_name(name)
     handle = ffc.flexflow_model_add_concat(self.handle, n, c_tensor_handle_list, axis, c_name)
@@ -1563,7 +1568,7 @@ class FFModel(object):
       split = sizes
     else:
       assert input.dims[axis] % sizes == 0, "Split dimension is not divisible"
-      split = [input.dims[axis] // sizes for i in range(sizes)]
+      split = [input.dims[axis] // sizes for _ in range(sizes)]
     n = len(split)
     assert n <= 256, "Please increase MAX_NUM_OUTPUTS"
     c_split = ffi.new("int[]", split)
@@ -2029,11 +2034,9 @@ class FFModel(object):
     self.optimizer = optimizer
 
     c_loss_type = enum_to_int(LossType, loss_type)
-    metrics_int = []
-    for metric in metrics:
-      metrics_int.append(enum_to_int(MetricsType, metric))
+    metrics_int = [enum_to_int(MetricsType, metric) for metric in metrics]
     c_metrics = ffi.new("int[]", metrics_int)
-    if comp_mode == None:
+    if comp_mode is None:
       comp_mode = CompMode.TRAINING
     c_comp_mode = enum_to_int(CompMode, comp_mode)
     ffc.flexflow_model_compile(self.handle, c_loss_type, c_metrics, len(metrics), c_comp_mode)
@@ -2061,21 +2064,18 @@ class FFModel(object):
              
     :returns:  None -- no returns.
     """
-    if (isinstance(x, list) == False):
-      dataloaders = [x]
-    else:
-      dataloaders = x
+    dataloaders = [x] if not isinstance(x, list) else x
     dataloaders.append(y)
 
     num_samples = y.num_samples
     batch_size = self._ffconfig.batch_size
     self._tracing_id += 1 # get a new tracing id
-    for epoch in range(0,epochs):
+    for _ in range(0,epochs):
       for d in dataloaders:
         d.reset()
       self.reset_metrics()
       iterations = num_samples / batch_size
-      for iter in range(0, int(iterations)):
+      for _ in range(0, int(iterations)):
         self._ffconfig.begin_trace(self._tracing_id)
         for d in dataloaders:
           d.next_batch(self)
@@ -2105,10 +2105,7 @@ class FFModel(object):
              
     :returns:  None -- no returns.
     """
-    if (isinstance(x, list) == False):
-      dataloaders = [x]
-    else:
-      dataloaders = x
+    dataloaders = [x] if not isinstance(x, list) else x
     dataloaders.append(y)
 
     num_samples = y.num_samples
@@ -2118,7 +2115,7 @@ class FFModel(object):
     self.reset_metrics()
     iterations = num_samples / batch_size
     self._tracing_id += 1 # get a new tracing id
-    for iter in range(0, int(iterations)):
+    for _ in range(0, int(iterations)):
       for d in dataloaders:
         d.next_batch(self)
       self._ffconfig.begin_trace(self._tracing_id)
@@ -2134,13 +2131,11 @@ class FFModel(object):
     ffc.flexflow_model_zero_gradients(self.handle)
 
   def set_optimizer(self, optimizer):
-    if isinstance(optimizer, SGDOptimizer) == True:
+    if isinstance(optimizer, SGDOptimizer):
       ffc.flexflow_model_set_sgd_optimizer(self.handle, optimizer.handle)
-    elif isinstance(optimizer, AdamOptimizer) == True:
+    elif isinstance(optimizer, AdamOptimizer):
       ffc.flexflow_model_set_adam_optimizer(self.handle, optimizer.handle)
-    elif optimizer == None:
-      pass
-    else:
+    elif optimizer != None:
       assert 0, "[Model]: unknown optimizer"
 
   optimizer = property(fset=set_optimizer)
@@ -2187,14 +2182,12 @@ class FFModel(object):
     :returns:  SingleDataloader -- returns a dataloader instance.
     """
 
-    if (self._ffconfig.enable_control_replication):
-      assert self._ffconfig.python_data_loader_type != 1, 'To enable control replication, please set --python-data-loader-type 2'
-      return self.__create_data_loader_ptr(batch_tensor, full_array)
-    else:
-      if (self._ffconfig.python_data_loader_type == 1):
-        return self.__create_data_loader_attach(batch_tensor, full_array)
-      else:
-        return self.__create_data_loader_ptr(batch_tensor, full_array)
+    if not self._ffconfig.enable_control_replication:
+      return (self.__create_data_loader_attach(batch_tensor, full_array) if
+              (self._ffconfig.python_data_loader_type == 1) else
+              self.__create_data_loader_ptr(batch_tensor, full_array))
+    assert self._ffconfig.python_data_loader_type != 1, 'To enable control replication, please set --python-data-loader-type 2'
+    return self.__create_data_loader_ptr(batch_tensor, full_array)
 
   def __create_data_loader_attach(self, batch_tensor, full_array):
     full_array_shape = full_array.shape
@@ -2237,20 +2230,17 @@ class FFModel(object):
       assert 0, "unsupported datatype"
     np_raw_ptr = full_array.__array_interface__['data']
     raw_ptr = ffi.cast("float*", np_raw_ptr[0])
-    print("numpy array: %s, %s, %s" % (str(np_raw_ptr), str(raw_ptr), hex(np_raw_ptr[0])))
-    dataloader = SingleDataLoader(self, batch_tensor, raw_ptr, num_samples, datatype)
-
-    return dataloader
+    print(f"numpy array: {str(np_raw_ptr)}, {str(raw_ptr)}, {hex(np_raw_ptr[0])}")
+    return SingleDataLoader(self, batch_tensor, raw_ptr, num_samples, datatype)
 
   def __get_initializer_handle(self, initializer):
-    if (initializer == None):
-      null_initializer = Initializer(None)
-      return null_initializer.handle
-    else:
+    if initializer is not None:
       return initializer.handle
+    null_initializer = Initializer(None)
+    return null_initializer.handle
 
   def __get_op_handle(self, shared_op):
-    if shared_op == None:
+    if shared_op is None:
       op_handle = ffi.new('flexflow_op_t *')
       op_handle.impl = ffi.NULL
       op = Op(op_handle[0])
@@ -2278,7 +2268,9 @@ class FFModel(object):
     elif np_array.dtype == np.int64:
       raw_ptr = ffi.cast("int64_t*", np_raw_ptr[0])
       ret_val = ffc.flexflow_tensor_get_tensor_int64(self.handle, ffmodel.handle, raw_ptr, False)
-    fflogger.debug("get weights raw_ptr: %s, %s, %s, %s" %( str(raw_ptr), str(np_raw_ptr[0]), hex(np_raw_ptr[0]), str(shape)))
+    fflogger.debug(
+        f"get weights raw_ptr: {str(raw_ptr)}, {str(np_raw_ptr[0])}, {hex(np_raw_ptr[0])}, {str(shape)}"
+    )
     assert ret_val == True
     return np_array   
 
@@ -2315,10 +2307,7 @@ class Initializer(object):
   __slots__ = ['handle', 'p_handle']
   def __init__(self, handle, p_handle=0):
     self.p_handle = ffi.new('flexflow_initializer_t *')
-    if (handle == None):
-      self.p_handle.impl = ffi.NULL
-    else:
-      self.p_handle.impl = handle.impl
+    self.p_handle.impl = ffi.NULL if handle is None else handle.impl
     self.handle = self.p_handle[0]
     assert ffi.typeof(self.handle) == ffi.typeof('flexflow_initializer_t'), "Initializer handle is wrong"
 
@@ -2413,18 +2402,14 @@ class DLRMConfig(object):
 
     mlp_bot_c = ffc.flexflow_dlrm_config_get_mlp_bot(self.handle)
     self.mlp_bot = []
-    for i in range(0, mlp_bot_c[0]):
-      self.mlp_bot.append(mlp_bot_c[i+1])
-
+    self.mlp_bot.extend(mlp_bot_c[i+1] for i in range(0, mlp_bot_c[0]))
     mlp_top_c = ffc.flexflow_dlrm_config_get_mlp_top(self.handle)
     self.mlp_top = []
-    for i in range(0, mlp_top_c[0]):
-      self.mlp_top.append(mlp_top_c[i+1])
-
+    self.mlp_top.extend(mlp_top_c[i+1] for i in range(0, mlp_top_c[0]))
     embedding_size_c = ffc.flexflow_dlrm_config_get_embedding_size(self.handle)
     self.embedding_size = []
-    for i in range(0, embedding_size_c[0]):
-      self.embedding_size.append(embedding_size_c[i+1])
+    self.embedding_size.extend(embedding_size_c[i + 1]
+                               for i in range(0, embedding_size_c[0]))
 
 # -----------------------------------------------------------------------
 # Single DataLoader

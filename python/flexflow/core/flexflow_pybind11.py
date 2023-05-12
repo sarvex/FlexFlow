@@ -34,13 +34,11 @@ ff_tracing_id = 200
 #   return self.op.num_weights
 
 def get_weight_tensor(self):
-  parameter = self.get_parameter_by_id(0)
-  return parameter
+  return self.get_parameter_by_id(0)
 setattr(Op, "get_weight_tensor", get_weight_tensor)
 
 def get_bias_tensor(self):
-  parameter = self.get_parameter_by_id(1)
-  return parameter
+  return self.get_parameter_by_id(1)
 setattr(Op, "get_bias_tensor", get_bias_tensor)
     
 # -----------------------------------------------------------------------
@@ -51,21 +49,26 @@ def get_weights(self, ffmodel):
   shape = self.dims
   np_array = np.empty(shape, dtype=np.float32)
   np_raw_ptr = np_array.__array_interface__['data']
-  fflogger.debug("get weights raw_ptr: %s, %s, %s" %( str(np_raw_ptr[0]), hex(np_raw_ptr[0]), str(shape)))
+  fflogger.debug(
+      f"get weights raw_ptr: {str(np_raw_ptr[0])}, {hex(np_raw_ptr[0])}, {str(shape)}"
+  )
   ret_val = self._get_weights(ffmodel, np_array)
   assert ret_val == True
   return np_array
 setattr(Parameter, "get_weights", get_weights)
   
 def set_weights(self, ffmodel, np_array):
-  assert np_array.__array_interface__['strides'] == None, "Parameter set_weights, numpy array strides is not None"
+  assert (np_array.__array_interface__['strides'] is
+          None), "Parameter set_weights, numpy array strides is not None"
   np_shape = np_array.shape
   num_dims = len(np_shape)
   assert num_dims == self.num_dims, "please check dims (%d == %d)" %(num_dims, self.parameter.num_dims)
   for i in range(0, num_dims):
     assert np_shape[i] == self.dims[i], "please check shape dim %d (%d == %d)" %(i, np_shape[i], self.dims[i])
   np_raw_ptr = np_array.__array_interface__['data']
-  fflogger.debug("set weights raw_ptr: %s, %s, %s" %( str(np_raw_ptr[0]), hex(np_raw_ptr[0]), str(np_shape)))
+  fflogger.debug(
+      f"set weights raw_ptr: {str(np_raw_ptr[0])}, {hex(np_raw_ptr[0])}, {str(np_shape)}"
+  )
   ret_val = self._set_weights(ffmodel, self.dims, np_array)
   assert ret_val == True, ret_val
 setattr(Parameter, "set_weights", set_weights)
@@ -88,7 +91,7 @@ class FFModel(_FFModel):
       split = sizes
     else:
       assert input.dims[axis] % sizes == 0, "Split dimension is not divisible"
-      split = [input.dims[axis] // sizes for i in range(sizes)]
+      split = [input.dims[axis] // sizes for _ in range(sizes)]
     return _FFModel.split(self, input, split, axis, name)
     
   def compile(self, optimizer=None, loss_type=None, metrics=None, comp_mode=CompMode.TRAINING):
@@ -97,21 +100,18 @@ class FFModel(_FFModel):
     self._compile(loss_type, metrics, comp_mode)
   
   def fit(self, x=None, y=None, batch_size=None, epochs=1):
-    if (isinstance(x, list) == False):
-      dataloaders = [x]
-    else:
-      dataloaders = x
+    dataloaders = [x] if not isinstance(x, list) else x
     dataloaders.append(y)
 
     num_samples = y.num_samples
     batch_size = self._ffconfig.batch_size
     self._tracing_id += 1 # get a new tracing id
-    for epoch in range(0,epochs):
+    for _ in range(0,epochs):
       for d in dataloaders:
         d.reset()
       self.reset_metrics()
       iterations = num_samples / batch_size
-      for iter in range(0, int(iterations)):
+      for _ in range(0, int(iterations)):
         for d in dataloaders:
           d.next_batch(self)
         self._ffconfig.begin_trace(self._tracing_id)
@@ -122,10 +122,7 @@ class FFModel(_FFModel):
         self._ffconfig.end_trace(self._tracing_id)
         
   def eval(self, x=None, y=None, batch_size=None):
-    if (isinstance(x, list) == False):
-      dataloaders = [x]
-    else:
-      dataloaders = x
+    dataloaders = [x] if not isinstance(x, list) else x
     dataloaders.append(y)
 
     num_samples = y.num_samples
@@ -135,7 +132,7 @@ class FFModel(_FFModel):
     self.reset_metrics()
     iterations = num_samples / batch_size
     self._tracing_id += 1 # get a new tracing id
-    for iter in range(0, int(iterations)):
+    for _ in range(0, int(iterations)):
       for d in dataloaders:
         d.next_batch(self)
       self._ffconfig.begin_trace(self._tracing_id)

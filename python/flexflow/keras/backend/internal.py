@@ -37,11 +37,14 @@ class BatchMatmul(Layer):
     self.output_shape = (
         input_tensors[0].batch_shape[0], input_tensors[0].batch_shape[1],
         input_tensors[1].batch_shape[2])
-    fflogger.debug("add output %s" %( str(self.output_shape)))
+    fflogger.debug(f"add output {self.output_shape}")
 
   def get_summary(self):
-    summary = "%s%s%s\n"%(self._get_summary_name(), self.output_shape, self._get_summary_connected_to())
-    return summary
+    return "%s%s%s\n" % (
+        self._get_summary_name(),
+        self.output_shape,
+        self._get_summary_connected_to(),
+    )
 
   def __call__(self, input_tensors):
     return self._connect_layer_n_input_1_output(input_tensors)
@@ -80,11 +83,14 @@ class Sin(Layer):
   def _calculate_inout_shape(self, input_tensor):
     self.input_shape = input_tensor.batch_shape
     self.output_shape = input_tensor.batch_shape
-    fflogger.debug("add output %s" %( str(self.output_shape)))
+    fflogger.debug(f"add output {str(self.output_shape)}")
 
   def get_summary(self):
-    summary = "%s%s%s\n"%(self._get_summary_name(), self.output_shape, self._get_summary_connected_to())
-    return summary
+    return "%s%s%s\n" % (
+        self._get_summary_name(),
+        self.output_shape,
+        self._get_summary_connected_to(),
+    )
 
   def __call__(self, input_tensor):
     return self._connect_layer_1_input_1_output(input_tensor)
@@ -109,11 +115,14 @@ class Cos(Layer):
   def _calculate_inout_shape(self, input_tensor):
     self.input_shape = input_tensor.batch_shape
     self.output_shape = input_tensor.batch_shape
-    fflogger.debug("add output %s" %( str(self.output_shape)))
+    fflogger.debug(f"add output {str(self.output_shape)}")
 
   def get_summary(self):
-    summary = "%s%s%s\n"%(self._get_summary_name(), self.output_shape, self._get_summary_connected_to())
-    return summary
+    return "%s%s%s\n" % (
+        self._get_summary_name(),
+        self.output_shape,
+        self._get_summary_connected_to(),
+    )
 
   def __call__(self, input_tensor):
     return self._connect_layer_1_input_1_output(input_tensor)
@@ -138,11 +147,14 @@ class Exp(Layer):
   def _calculate_inout_shape(self, input_tensor):
     self.input_shape = input_tensor.batch_shape
     self.output_shape = input_tensor.batch_shape
-    fflogger.debug("add output %s" %( str(self.output_shape)))
+    fflogger.debug(f"add output {str(self.output_shape)}")
 
   def get_summary(self):
-    summary = "%s%s%s\n"%(self._get_summary_name(), self.output_shape, self._get_summary_connected_to())
-    return summary
+    return "%s%s%s\n" % (
+        self._get_summary_name(),
+        self.output_shape,
+        self._get_summary_connected_to(),
+    )
 
   def __call__(self, input_tensor):
     return self._connect_layer_1_input_1_output(input_tensor)
@@ -168,11 +180,14 @@ class Pow(Layer):
   def _calculate_inout_shape(self, input_tensor):
     self.input_shape = input_tensor.batch_shape
     self.output_shape = input_tensor.batch_shape
-    fflogger.debug("add output %s" %( str(self.output_shape)))
+    fflogger.debug(f"add output {str(self.output_shape)}")
 
   def get_summary(self):
-    summary = "%s%s%s\n"%(self._get_summary_name(), self.output_shape, self._get_summary_connected_to())
-    return summary
+    return "%s%s%s\n" % (
+        self._get_summary_name(),
+        self.output_shape,
+        self._get_summary_connected_to(),
+    )
 
   def __call__(self, input_tensor):
     return self._connect_layer_1_input_1_output(input_tensor)
@@ -189,14 +204,14 @@ class Pow(Layer):
 
 class ReduceSum(Layer):
   def __init__(self, axis, keepdims, **kwargs):
-    super(ReduceSum, self).__init__("reduce_sum", "ReduceSum", **kwargs) 
+    super(ReduceSum, self).__init__("reduce_sum", "ReduceSum", **kwargs)
     self.keepdims = keepdims
     if isinstance(axis, int):
       axis = [axis]
     elif axis is None:
       axis = None
     else:
-      axis = [a for a in axis]
+      axis = list(axis)
     self.axis = axis
 
   def verify_meta_data(self):
@@ -214,11 +229,14 @@ class ReduceSum(Layer):
       else:
         self.output_shape.append(sh)
     self.output_shape = tuple(self.output_shape)
-    fflogger.debug("add output %s" %( str(self.output_shape)))
+    fflogger.debug(f"add output {self.output_shape}")
 
   def get_summary(self):
-    summary = "%s%s%s\n"%(self._get_summary_name(), self.output_shape, self._get_summary_connected_to())
-    return summary
+    return "%s%s%s\n" % (
+        self._get_summary_name(),
+        self.output_shape,
+        self._get_summary_connected_to(),
+    )
 
   def __call__(self, input_tensor):
     return self._connect_layer_1_input_1_output(input_tensor)
@@ -243,11 +261,14 @@ class Rsqrt(Layer):
   def _calculate_inout_shape(self, input_tensor):
     self.input_shape = input_tensor.batch_shape
     self.output_shape = input_tensor.batch_shape
-    fflogger.debug("add output %s" %( str(self.output_shape)))
+    fflogger.debug(f"add output {str(self.output_shape)}")
 
   def get_summary(self):
-    summary = "%s%s%s\n"%(self._get_summary_name(), self.output_shape, self._get_summary_connected_to())
-    return summary
+    return "%s%s%s\n" % (
+        self._get_summary_name(),
+        self.output_shape,
+        self._get_summary_connected_to(),
+    )
 
   def __call__(self, input_tensor):
     return self._connect_layer_1_input_1_output(input_tensor)
@@ -277,11 +298,14 @@ class Gather(Layer):
   def _calculate_inout_shape(self, input_tensors):
     self.input_shape = input_tensors[0].batch_shape
     self.output_shape = input_tensors[1].batch_shape
-    fflogger.debug("add output %s" %( str(self.output_shape)))
+    fflogger.debug(f"add output {str(self.output_shape)}")
 
   def get_summary(self):
-    summary = "%s%s%s\n"%(self._get_summary_name(), self.output_shape, self._get_summary_connected_to())
-    return summary
+    return "%s%s%s\n" % (
+        self._get_summary_name(),
+        self.output_shape,
+        self._get_summary_connected_to(),
+    )
 
   def __call__(self, input_tensors):
     return self._connect_layer_n_input_1_output(input_tensors)

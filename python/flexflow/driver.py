@@ -19,9 +19,7 @@ from .config import flexflow_dir
 
 _version = sys.version_info
 
-if _version.major == 3 and _version.minor >= 6: # Python 3.6 up:
-  pass
-else:
+if _version.major != 3 or _version.minor < 6:
   raise Exception('Incompatible Python version')
 
 os_name = platform.system()
@@ -31,7 +29,7 @@ if os_name == 'Linux':
 elif os_name == 'Darwin': # Don't currently support Darwin at the moment
   dylib_ext = '.dylib'
 else:
-  raise Exception('FlexFlow does not work on %s' % platform.system())
+  raise Exception(f'FlexFlow does not work on {platform.system()}')
   
 def find_flexflow_python_exe():
   ff_dir = flexflow_dir()
@@ -65,18 +63,18 @@ def find_flexflow_python_exe():
 def run_flexflow(freeze_on_error, backtrace, opts):
   flexflow_python_path, flexflow_lib_dir, flexflow_lib64_dir = find_flexflow_python_exe()
   # print(flexflow_python_path, flexflow_lib_dir, flexflow_lib64_dir)
-  
-  # set LD_LIBRARY_PATH  
-  cmd_env = dict(os.environ.items())
+
+  # set LD_LIBRARY_PATH
+  cmd_env = dict(os.environ)
   if 'LD_LIBRARY_PATH' in cmd_env:
-    cmd_env['LD_LIBRARY_PATH'] += ':' + flexflow_lib_dir + ':' + flexflow_lib64_dir
+    cmd_env['LD_LIBRARY_PATH'] += f':{flexflow_lib_dir}:{flexflow_lib64_dir}'
   else:
-    cmd_env['LD_LIBRARY_PATH'] = flexflow_lib_dir + ':' + flexflow_lib64_dir
-    
+    cmd_env['LD_LIBRARY_PATH'] = f'{flexflow_lib_dir}:{flexflow_lib64_dir}'
+
   # freeze on error
   if freeze_on_error:
       cmd_env["LEGION_FREEZE_ON_ERROR"] = str(1)
-      
+
   # print backtrace
   if backtrace:
       cmd_env["LEGION_BACKTRACE"] = str(1)
@@ -85,12 +83,10 @@ def run_flexflow(freeze_on_error, backtrace, opts):
   cmd = [str(flexflow_python_path)]
   cmd += opts
   # print(cmd)
-  
+
   # Launch the child process
   child_proc = subprocess.Popen(cmd, env = cmd_env)
-  # Wait for it to finish running
-  result = child_proc.wait()
-  return result
+  return child_proc.wait()
 
 def flexflow_driver():
   parser = argparse.ArgumentParser(description='FlexFlow Driver.')
@@ -109,11 +105,6 @@ def flexflow_driver():
     help="if the program crashes, print the backtrace where an error occurs",
   )
   args, opts = parser.parse_known_args()
-  # See if we have at least one script file to run
-  console = True
-  for opt in opts:
-    if '.py' in opt:
-      console = False
-      break
-  assert console == False, "Please provide a python file"
+  console = all('.py' not in opt for opt in opts)
+  assert not console, "Please provide a python file"
   return run_flexflow(args.freeze_on_error, args.backtrace, opts)

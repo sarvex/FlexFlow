@@ -14,8 +14,7 @@ def InceptionA(ffmodel, input, pool_features):
   t3 = ffmodel.conv2d(t3, 96, 3, 3, 1, 1, 1, 1)
   t4 = ffmodel.pool2d(input, 3, 3, 1, 1, 1, 1, PoolType.POOL_AVG)
   t4 = ffmodel.conv2d(t4, pool_features, 1, 1, 1, 1, 0, 0)
-  output = ffmodel.concat([t1, t2, t3, t4], 1)
-  return output
+  return ffmodel.concat([t1, t2, t3, t4], 1)
 
 def InceptionB(ffmodel, input):
   t1 = ffmodel.conv2d(input, 384, 3, 3, 2, 2, 0, 0)
@@ -23,8 +22,7 @@ def InceptionB(ffmodel, input):
   t2 = ffmodel.conv2d(t2, 96, 3, 3, 1, 1, 1, 1)
   t2 = ffmodel.conv2d(t2, 96, 3, 3, 2, 2, 0, 0)
   t3 = ffmodel.pool2d(input, 3, 3, 2, 2, 0, 0)
-  output = ffmodel.concat([t1, t2, t3], 1)
-  return output
+  return ffmodel.concat([t1, t2, t3], 1)
 
 def InceptionC(ffmodel, input, channels):
   t1 = ffmodel.conv2d(input, 192, 1, 1, 1, 1, 0, 0)
@@ -38,8 +36,7 @@ def InceptionC(ffmodel, input, channels):
   t3 = ffmodel.conv2d(t3, 192, 1, 7, 1, 1, 0, 3)
   t4 = ffmodel.pool2d(input, 3, 3, 1, 1, 1, 1, PoolType.POOL_AVG)
   t4 = ffmodel.conv2d(t4, 192, 1, 1, 1, 1, 0, 0)
-  output = ffmodel.concat([t1, t2, t3, t4], 1)
-  return output;
+  return ffmodel.concat([t1, t2, t3, t4], 1)
 
 def InceptionD(ffmodel, input):
   t1 = ffmodel.conv2d(input, 192, 1, 1, 1, 1, 0, 0)
@@ -49,8 +46,7 @@ def InceptionD(ffmodel, input):
   t2 = ffmodel.conv2d(t2, 192, 7, 1, 1, 1, 3, 0)
   t2 = ffmodel.conv2d(t2, 192, 3, 3, 2, 2, 0, 0)
   t3 = ffmodel.pool2d(input, 3, 3, 2, 2, 0, 0)
-  output = ffmodel.concat([t1, t2, t3], 1)
-  return output;
+  return ffmodel.concat([t1, t2, t3], 1)
 
 def InceptionE(ffmodel, input):
   t1 = ffmodel.conv2d(input, 320, 1, 1, 1, 1, 0, 0)
@@ -63,8 +59,7 @@ def InceptionE(ffmodel, input):
   t5 = ffmodel.conv2d(t3i, 384, 3, 1, 1, 1, 1, 0)
   t6 = ffmodel.pool2d(input, 3, 3, 1, 1, 1, 1, PoolType.POOL_AVG)
   t6 = ffmodel.conv2d(t6, 192, 1, 1, 1, 1, 0, 0)
-  output = ffmodel.concat([t1, t2, t3, t4, t5, t6], 1)
-  return output;
+  return ffmodel.concat([t1, t2, t3, t4, t5, t6], 1)
 
 def inception():
   ffconfig = FFConfig()

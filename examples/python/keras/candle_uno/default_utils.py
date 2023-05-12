@@ -68,17 +68,13 @@ def check_flag_conflicts(params):
     # check for conflicts
     #conflict_flag = False
     # loop over each set of mutually exclusive flags
-    # if any set conflicts exit program 
+    # if any set conflicts exit program
     for flag_list in CONFLICT_LIST:
-        flag_count = 0
-        for i in flag_list:
-            if i in key_set:
-                if params[i] is True:
-                    flag_count +=1
-        if flag_count > 1 :
-            raise Exception('ERROR ! Conflict in flag specification. ' \
-                        'These flags should not be used together: ' + str(sorted(flag_list)) + \
-                            '... Exiting')
+        flag_count = sum(1 for i in flag_list if i in key_set and params[i] is True)
+        if flag_count > 1:
+            raise Exception(
+                f'ERROR ! Conflict in flag specification. These flags should not be used together: {str(sorted(flag_list))}... Exiting'
+            )
             #print("Warning: conflicting flags in ", flag_list)
             #exit()
 
@@ -187,15 +183,9 @@ def eval_string_as_list(str_read, separator, dtype):
     if ldtype is None:
         ldtype = np.int32
 
-    # Split list
-    decoded_list = []
     out_list = str_read.split(separator)
 
-    # Convert to desired type
-    for el in out_list:
-        decoded_list.append( ldtype( el ) )
-
-    return decoded_list
+    return [ldtype( el ) for el in out_list]
 
 
 
@@ -229,11 +219,8 @@ def eval_string_as_list_of_lists(str_read, separator_out, separator_in, dtype):
     out_list = str_read.split(separator_out)
     # Split each internal list
     for l in out_list:
-        in_list = []
         elem = l.split(separator_in)
-        # Convert to desired type
-        for el in elem:
-            in_list.append( ldtype( el ) )
+        in_list = [ldtype( el ) for el in elem]
         decoded_list.append( in_list )
 
     return decoded_list
@@ -345,10 +332,8 @@ class ListOfListsAction(argparse.Action):
         out_list = removed2.split(':')
 
         for l in out_list:
-            in_list = []
             elem = l.split(',')
-            for el in elem:
-                in_list.append( self.dtype( el ) )
+            in_list = [self.dtype( el ) for el in elem]
             decoded_list.append( in_list )
 
         setattr(namespace, self.dest, decoded_list)
@@ -388,10 +373,7 @@ def check_file_parameters_exists(params_parser, params_benchmark, params_file):
     # Get keywords from arguments coming via command line (and CANDLE supervisor)
     args_dict = vars(params_parser)
     args_set = set(args_dict.keys())
-    # Get keywords from benchmark definition
-    bmk_keys = []
-    for item in params_benchmark:
-        bmk_keys.append( item['name'] )
+    bmk_keys = [item['name'] for item in params_benchmark]
     bmk_set = set(bmk_keys)
     # Get core CANDLE keywords
     candle_set = set(PARAMETERS_CANDLE)
@@ -400,11 +382,8 @@ def check_file_parameters_exists(params_parser, params_benchmark, params_file):
     candle_set = candle_set.union(bmk_set)
     # Get keywords used in config_file
     file_set = set(params_file.keys())
-    # Compute keywords that come from the config_file that are not in the CANDLE specs
-    diff_set = file_set.difference(candle_set)
-
-    if ( len(diff_set) > 0 ):
-        message = 'These keywords used in the configuration file are not defined in CANDLE: ' + str(sorted(diff_set))
+    if diff_set := file_set.difference(candle_set):
+        message = f'These keywords used in the configuration file are not defined in CANDLE: {str(sorted(diff_set))}'
         warnings.warn(message, RuntimeWarning)
 
 
@@ -723,15 +702,14 @@ def args_overwrite_config(args, config):
 
     args_dict = vars(args)
 
-    for key in args_dict.keys():
+    for key in args_dict:
         params[key] = args_dict[key]
 
 
     if 'data_type' not in params:
         params['data_type'] = DEFAULT_DATATYPE
-    else:
-        if params['data_type'] in set(['f16', 'f32', 'f64']):
-            params['data_type'] = get_choice(params['datatype'])
+    elif params['data_type'] in {'f16', 'f32', 'f64'}:
+        params['data_type'] = get_choice(params['datatype'])
 
     if 'output_dir' not in params:
         params['output_dir'] = directory_from_parameters(params)
@@ -752,18 +730,12 @@ def args_overwrite_config(args, config):
 def get_choice(name):
     """ Maps name string to the right type of argument
     """
-    mapping = {}
+    mapping = {'f16': np.float16, 'f32': np.float32, 'f64': np.float64}
 
-    # dtype
-    mapping['f16'] = np.float16
-    mapping['f32'] = np.float32
-    mapping['f64'] = np.float64
-
-    mapped = mapping.get(name)
-    if not mapped:
-        raise Exception('No mapping found for "{}"'.format(name))
-
-    return mapped
+    if mapped := mapping.get(name):
+        return mapped
+    else:
+        raise Exception(f'No mapping found for "{name}"')
 
 
 def directory_from_parameters(params, commonroot='Output'):
@@ -778,7 +750,7 @@ def directory_from_parameters(params, commonroot='Output'):
 
     """
 
-    if commonroot in set(['.', './']): # Same directory --> convert to absolute path
+    if commonroot in {'.', './'}: # Same directory --> convert to absolute path
         outdir = os.path.abspath('.')
     else: # Create path specified
         outdir = os.path.abspath(os.path.join('.', commonroot))
@@ -881,20 +853,19 @@ class Benchmark:
                 if d['action'] == 'list-of-lists': # Non standard. Specific functionallity has been added
                     d['action'] = ListOfListsAction
                     self.parser.add_argument('--' + d['name'], dest=d['name'], action=d['action'], type=d['type'], default=d['default'], help=d['help'])
-                elif (d['action'] == 'store_true') or (d['action'] == 'store_false'):
+                elif d['action'] in ['store_true', 'store_false']:
                     raise Exception ('The usage of store_true or store_false cannot be undone in the command line. Use type=str2bool instead.')
                 else:
                     self.parser.add_argument('--' + d['name'], action=d['action'], default=d['default'], help=d['help'])
-            else: # Non actions
-                if 'nargs' in d: # variable parameters
-                    if 'choices' in d: # choices with variable parameters
-                        self.parser.add_argument('--' + d['name'], nargs=d['nargs'], choices=d['choices'], default=d['default'], help=d['help'])
-                    else: # Variable parameters (free, no limited choices)
-                        self.parser.add_argument('--' + d['name'], nargs=d['nargs'], type=d['type'], default=d['default'], help=d['help'])
-                elif 'choices' in d: # Select from choice (fixed number of parameters)
-                    self.parser.add_argument('--' + d['name'], choices=d['choices'], default=d['default'], help=d['help'])
-                else: # Non an action, one parameter, no choices
-                    self.parser.add_argument('--' + d['name'], type=d['type'], default=d['default'], help=d['help'])
+            elif 'nargs' in d: # variable parameters
+                if 'choices' in d: # choices with variable parameters
+                    self.parser.add_argument('--' + d['name'], nargs=d['nargs'], choices=d['choices'], default=d['default'], help=d['help'])
+                else: # Variable parameters (free, no limited choices)
+                    self.parser.add_argument('--' + d['name'], nargs=d['nargs'], type=d['type'], default=d['default'], help=d['help'])
+            elif 'choices' in d: # Select from choice (fixed number of parameters)
+                self.parser.add_argument('--' + d['name'], choices=d['choices'], default=d['default'], help=d['help'])
+            else: # Non an action, one parameter, no choices
+                self.parser.add_argument('--' + d['name'], type=d['type'], default=d['default'], help=d['help'])
 
 
 
@@ -918,11 +889,7 @@ class Benchmark:
 
         for d in self.additional_definitions:
             if d['name'] in configOut.keys():
-                if 'type' in d:
-                    dtype = d['type']
-                else:
-                    dtype = None
-
+                dtype = d['type'] if 'type' in d else None
                 if 'action' in d:
                     if inspect.isclass(d['action']):
                         str_read = dictfileparam[d['name']]
@@ -950,7 +917,7 @@ class Benchmark:
         # will be used)
         for sec in section:
             for k,v in config.items(sec):
-                if not k in fileParams:
+                if k not in fileParams:
                     fileParams[k] = eval(v)
         fileParams = self.format_benchmark_config_arguments(fileParams)
         #pprint(fileParams)
@@ -991,26 +958,18 @@ def keras_default_config():
         This helps to keep consistency in parameters between frameworks.
     """
 
-    kerasDefaults = {}
-
-    # Optimizers
-    #kerasDefaults['clipnorm']=?            # Maximum norm to clip all parameter gradients
-    #kerasDefaults['clipvalue']=?          # Maximum (minimum=-max) value to clip all parameter gradients
-    kerasDefaults['decay_lr']=0.            # Learning rate decay over each update
-    kerasDefaults['epsilon']=1e-8           # Factor to avoid divide by zero (fuzz factor)
-    kerasDefaults['rho']=0.9                # Decay parameter in some optmizer updates (rmsprop, adadelta)
-    kerasDefaults['momentum_sgd']=0.        # Momentum for parameter update in sgd optimizer
-    kerasDefaults['nesterov_sgd']=False     # Whether to apply Nesterov momentum in sgd optimizer
-    kerasDefaults['beta_1']=0.9             # Parameter in some optmizer updates (adam, adamax, nadam)
-    kerasDefaults['beta_2']=0.999           # Parameter in some optmizer updates (adam, adamax, nadam)
-    kerasDefaults['decay_schedule_lr']=0.004# Parameter for nadam optmizer
-
-    # Initializers
-    kerasDefaults['minval_uniform']=-0.05   #  Lower bound of the range of random values to generate
-    kerasDefaults['maxval_uniform']=0.05    #  Upper bound of the range of random values to generate
-    kerasDefaults['mean_normal']=0.         #  Mean of the random values to generate
-    kerasDefaults['stddev_normal']=0.05     #  Standard deviation of the random values to generate
-
-
-    return kerasDefaults
+    return {
+        'decay_lr': 0.0,
+        'epsilon': 1e-08,
+        'rho': 0.9,
+        'momentum_sgd': 0.0,
+        'nesterov_sgd': False,
+        'beta_1': 0.9,
+        'beta_2': 0.999,
+        'decay_schedule_lr': 0.004,
+        'minval_uniform': -0.05,
+        'maxval_uniform': 0.05,
+        'mean_normal': 0.0,
+        'stddev_normal': 0.05,
+    }
 

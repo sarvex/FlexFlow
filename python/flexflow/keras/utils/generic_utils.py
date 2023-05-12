@@ -126,7 +126,7 @@ def deserialize_keras_object(identifier, module_objects=None,
         # In this case we are dealing with a Keras config dictionary.
         config = identifier
         if 'class_name' not in config or 'config' not in config:
-            raise ValueError('Improper config format: {}'.format(config))
+            raise ValueError(f'Improper config format: {config}')
         class_name = config['class_name']
         if custom_objects and class_name in custom_objects:
             cls = custom_objects[class_name]
@@ -136,8 +136,7 @@ def deserialize_keras_object(identifier, module_objects=None,
             module_objects = module_objects or {}
             cls = module_objects.get(class_name)
             if cls is None:
-                raise ValueError('Unknown {}: {}'.format(printable_module_name,
-                                                         class_name))
+                raise ValueError(f'Unknown {printable_module_name}: {class_name}')
         if hasattr(cls, 'from_config'):
             custom_objects = custom_objects or {}
             if has_arg(cls.from_config, 'custom_objects'):
@@ -163,12 +162,12 @@ def deserialize_keras_object(identifier, module_objects=None,
         else:
             fn = module_objects.get(function_name)
             if fn is None:
-                raise ValueError('Unknown {}: {}'.format(printable_module_name,
-                                                         function_name))
+                raise ValueError(f'Unknown {printable_module_name}: {function_name}')
         return fn
     else:
-        raise ValueError('Could not interpret serialized '
-                         '{}: {}'.format(printable_module_name, identifier))
+        raise ValueError(
+            f'Could not interpret serialized {printable_module_name}: {identifier}'
+        )
 
 
 def func_dump(func):
@@ -221,17 +220,14 @@ def func_load(code, defaults=None, closure=None, globs=None):
             value  # just access it so it gets captured in .__closure__
 
         cell_value = dummy_fn.__closure__[0]
-        if not isinstance(value, type(cell_value)):
-            return cell_value
-        else:
-            return value
+        return cell_value if not isinstance(value, type(cell_value)) else value
 
     if closure is not None:
         closure = tuple(ensure_value_to_cell(_) for _ in closure)
     try:
         raw_code = codecs.decode(code.encode('ascii'), 'base64')
         code = marshal.loads(raw_code)
-    except (UnicodeEncodeError, binascii.Error, ValueError):
+    except (binascii.Error, ValueError):
         # backwards compatibility for models serialized prior to 2.1.2
         raw_code = code.encode('raw_unicode_escape')
         code = marshal.loads(raw_code)
@@ -259,15 +255,14 @@ def getargspec(fn):
         from FullArgSpec.
     """
     if sys.version_info < (3,):
-        arg_spec = inspect.getargspec(fn)
-    else:
-        full_arg_spec = inspect.getfullargspec(fn)
-        arg_spec = inspect.ArgSpec(
-            args=full_arg_spec.args,
-            varargs=full_arg_spec.varargs,
-            keywords=full_arg_spec.varkw,
-            defaults=full_arg_spec.defaults)
-    return arg_spec
+        return inspect.getargspec(fn)
+    full_arg_spec = inspect.getfullargspec(fn)
+    return inspect.ArgSpec(
+        args=full_arg_spec.args,
+        varargs=full_arg_spec.varargs,
+        keywords=full_arg_spec.varkw,
+        defaults=full_arg_spec.defaults,
+    )
 
 
 def has_arg(fn, name, accept_all=False):
@@ -332,11 +327,7 @@ class Progbar(object):
         self.width = width
         self.verbose = verbose
         self.interval = interval
-        if stateful_metrics:
-            self.stateful_metrics = set(stateful_metrics)
-        else:
-            self.stateful_metrics = set()
-
+        self.stateful_metrics = set(stateful_metrics) if stateful_metrics else set()
         self._dynamic_display = ((hasattr(sys.stdout, 'isatty') and
                                   sys.stdout.isatty()) or
                                  'ipykernel' in sys.modules)
@@ -359,18 +350,17 @@ class Progbar(object):
         """
         values = values or []
         for k, v in values:
-            if k not in self.stateful_metrics:
-                if k not in self._values:
-                    self._values[k] = [v * (current - self._seen_so_far),
-                                       current - self._seen_so_far]
-                else:
-                    self._values[k][0] += v * (current - self._seen_so_far)
-                    self._values[k][1] += (current - self._seen_so_far)
-            else:
+            if k in self.stateful_metrics:
                 # Stateful metrics output a numeric value.  This representation
                 # means "take an average from a single value" but keeps the
                 # numeric formatting.
                 self._values[k] = [v, 1]
+            elif k not in self._values:
+                self._values[k] = [v * (current - self._seen_so_far),
+                                   current - self._seen_so_far]
+            else:
+                self._values[k][0] += v * (current - self._seen_so_far)
+                self._values[k][1] += (current - self._seen_so_far)
         self._seen_so_far = current
 
         now = time.time()
@@ -395,10 +385,7 @@ class Progbar(object):
                 prog_width = int(self.width * prog)
                 if prog_width > 0:
                     bar += ('=' * (prog_width - 1))
-                    if current < self.target:
-                        bar += '>'
-                    else:
-                        bar += '='
+                    bar += '>' if current < self.target else '='
                 bar += ('.' * (self.width - prog_width))
                 bar += ']'
             else:
@@ -407,10 +394,7 @@ class Progbar(object):
             self._total_width = len(bar)
             sys.stdout.write(bar)
 
-            if current:
-                time_per_unit = (now - self._start) / current
-            else:
-                time_per_unit = 0
+            time_per_unit = (now - self._start) / current if current else 0
             if self.target is not None and current < self.target:
                 eta = time_per_unit * (self.target - current)
                 if eta > 3600:
@@ -421,26 +405,22 @@ class Progbar(object):
                 else:
                     eta_format = '%ds' % eta
 
-                info = ' - ETA: %s' % eta_format
+                info = f' - ETA: {eta_format}'
+            elif time_per_unit >= 1:
+                info += ' %.0fs/step' % time_per_unit
+            elif time_per_unit >= 1e-3:
+                info += ' %.0fms/step' % (time_per_unit * 1e3)
             else:
-                if time_per_unit >= 1:
-                    info += ' %.0fs/step' % time_per_unit
-                elif time_per_unit >= 1e-3:
-                    info += ' %.0fms/step' % (time_per_unit * 1e3)
-                else:
-                    info += ' %.0fus/step' % (time_per_unit * 1e6)
+                info += ' %.0fus/step' % (time_per_unit * 1e6)
 
             for k in self._values:
-                info += ' - %s:' % k
+                info += f' - {k}:'
                 if isinstance(self._values[k], list):
                     avg = np.mean(
                         self._values[k][0] / max(1, self._values[k][1]))
-                    if abs(avg) > 1e-3:
-                        info += ' %.4f' % avg
-                    else:
-                        info += ' %.4e' % avg
+                    info += ' %.4f' % avg if abs(avg) > 1e-3 else ' %.4e' % avg
                 else:
-                    info += ' %s' % self._values[k]
+                    info += f' {self._values[k]}'
 
             self._total_width += len(info)
             if prev_total_width > self._total_width:
@@ -455,13 +435,10 @@ class Progbar(object):
         elif self.verbose == 2:
             if self.target is None or current >= self.target:
                 for k in self._values:
-                    info += ' - %s:' % k
+                    info += f' - {k}:'
                     avg = np.mean(
                         self._values[k][0] / max(1, self._values[k][1]))
-                    if avg > 1e-3:
-                        info += ' %.4f' % avg
-                    else:
-                        info += ' %.4e' % avg
+                    info += ' %.4f' % avg if avg > 1e-3 else ' %.4e' % avg
                 info += '\n'
 
                 sys.stdout.write(info)
@@ -491,9 +468,7 @@ def to_list(x, allow_tuple=False):
     """
     if isinstance(x, list):
         return x
-    if allow_tuple and isinstance(x, tuple):
-        return list(x)
-    return [x]
+    return list(x) if allow_tuple and isinstance(x, tuple) else [x]
 
 
 def unpack_singleton(x):
@@ -507,9 +482,7 @@ def unpack_singleton(x):
     # Returns
         The same iterable or the first element.
     """
-    if len(x) == 1:
-        return x[0]
-    return x
+    return x[0] if len(x) == 1 else x
 
 
 def object_list_uid(object_list):
@@ -519,10 +492,7 @@ def object_list_uid(object_list):
 
 def is_all_none(iterable_or_element):
     iterable = to_list(iterable_or_element, allow_tuple=True)
-    for element in iterable:
-        if element is not None:
-            return False
-    return True
+    return all(element is None for element in iterable)
 
 
 def slice_arrays(arrays, start=None, stop=None):
@@ -548,22 +518,20 @@ def slice_arrays(arrays, start=None, stop=None):
     if arrays is None:
         return [None]
     elif isinstance(arrays, list):
-        if hasattr(start, '__len__'):
-            # hdf5 datasets only support list objects as indices
-            if hasattr(start, 'shape'):
-                start = start.tolist()
-            return [None if x is None else x[start] for x in arrays]
-        else:
+        if not hasattr(start, '__len__'):
             return [None if x is None else x[start:stop] for x in arrays]
+        # hdf5 datasets only support list objects as indices
+        if hasattr(start, 'shape'):
+            start = start.tolist()
+        return [None if x is None else x[start] for x in arrays]
+    elif hasattr(start, '__len__'):
+        if hasattr(start, 'shape'):
+            start = start.tolist()
+        return arrays[start]
+    elif hasattr(start, '__getitem__'):
+        return arrays[start:stop]
     else:
-        if hasattr(start, '__len__'):
-            if hasattr(start, 'shape'):
-                start = start.tolist()
-            return arrays[start]
-        elif hasattr(start, '__getitem__'):
-            return arrays[start:stop]
-        else:
-            return [None]
+        return [None]
 
 
 def transpose_shape(shape, target_format, spatial_axes):
@@ -604,9 +572,7 @@ def transpose_shape(shape, target_format, spatial_axes):
         new_values += (shape[-1],)
         new_values += tuple(shape[x] for x in spatial_axes)
 
-        if isinstance(shape, list):
-            return list(new_values)
-        return new_values
+        return list(new_values) if isinstance(shape, list) else new_values
     elif target_format == 'channels_last':
         return shape
     else:
@@ -616,8 +582,7 @@ def transpose_shape(shape, target_format, spatial_axes):
 
 
 def check_for_unexpected_keys(name, input_dict, expected_values):
-    unknown = set(input_dict.keys()).difference(expected_values)
-    if unknown:
-        raise ValueError('Unknown entries in {} dictionary: {}. Only expected '
-                         'following keys: {}'.format(name, list(unknown),
-                                                     expected_values))
+    if unknown := set(input_dict.keys()).difference(expected_values):
+        raise ValueError(
+            f'Unknown entries in {name} dictionary: {list(unknown)}. Only expected following keys: {expected_values}'
+        )

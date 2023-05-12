@@ -43,7 +43,7 @@ def binary(path, node_name):
     ], [helper.make_tensor_value_info('output', tp.FLOAT, [4, 2])])
     model = helper.make_model(graph, producer_name='model')
     checker.check_model(model)
-    save(model, os.path.join(path, '{}.onnx'.format(node_name.lower())))
+    save(model, os.path.join(path, f'{node_name.lower()}.onnx'))
 
 
 ## Average Pool

@@ -42,15 +42,10 @@ if flexflow_init_import():
       atexit.register(finish_flexflow_task)
     else:
       from .flexflow_cffi_header import ffc, ffi
-      argv = []
-      for arg in sys.argv:
-        argv.append(ffi.new("char[]", arg.encode('ascii')))
+      argv = [ffi.new("char[]", arg.encode('ascii')) for arg in sys.argv]
       ffc.begin_flexflow_task(len(sys.argv), argv)
       atexit.register(ffc.finish_flexflow_task)
   else:
     print("Using flexflow python")
-    
-  from .flexflow_top import flexflow_top_level_task, get_legion_runtime, get_legion_context
 
-else:
-  pass
+  from .flexflow_top import flexflow_top_level_task, get_legion_runtime, get_legion_context

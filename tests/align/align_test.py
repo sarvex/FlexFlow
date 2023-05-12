@@ -137,10 +137,10 @@ def _test_operator(operater_name):
         align_tensors(
             [
                 TensorAlignmentData(
-                    operater_name + "_out",
+                    f"{operater_name}_out",
                     expand("ff_out.pt"),
                     expand("torch_out.pt"),
-                ),
+                )
             ]
         )
         return
@@ -149,12 +149,12 @@ def _test_operator(operater_name):
     align_tensors(
         [
             TensorAlignmentData(
-                operater_name + "_out",
+                f"{operater_name}_out",
                 expand("ff_out.pt"),
                 expand("torch_out.pt"),
             ),
             TensorAlignmentData(
-                operater_name + "_out_grad",
+                f"{operater_name}_out_grad",
                 expand("ff_out_grad.pt"),
                 expand("torch_out_grad.pt"),
             ),
@@ -166,10 +166,10 @@ def _test_operator(operater_name):
         align_tensors(
             [
                 TensorAlignmentData(
-                    operater_name + "_weight_grad",
+                    f"{operater_name}_weight_grad",
                     expand("ff_weight_grad.pt"),
                     expand("torch_weight_grad.pt"),
-                ),
+                )
             ]
         )
     # test bias
@@ -177,9 +177,9 @@ def _test_operator(operater_name):
         align_tensors(
             [
                 TensorAlignmentData(
-                    operater_name + "_bias_grad",
+                    f"{operater_name}_bias_grad",
                     expand("ff_bias_grad.pt"),
-                    expand("torch_bias_grad.pt")
+                    expand("torch_bias_grad.pt"),
                 )
             ]
         )

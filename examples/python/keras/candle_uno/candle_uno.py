@@ -14,10 +14,7 @@ def initialize_parameters(default_model='uno_default_model.txt'):
   # Build benchmark object
   unoBmk = benchmark.BenchmarkUno(benchmark.file_path, default_model, 'keras',
                                   prog='uno_baseline', desc='Build neural network based models to predict tumor response to single and paired drugs.')
-  # Initialize parameters
-  gParameters = finalize_parameters(unoBmk)
-  # benchmark.logger.info('Params: {}'.format(gParameters))
-  return gParameters
+  return finalize_parameters(unoBmk)
 
 class Struct:
   def __init__(self, **entries):
@@ -42,8 +39,7 @@ def build_feature_model(input_shape, name='', dense_layers=[1000, 1000],
         h = Add([h, x])
       except ValueError:
         pass
-  model = Model(x_input, h, name=name)
-  return model
+  return Model(x_input, h, name=name)
 
 def build_model(loader, args, permanent_dropout=True, silent=False):
   input_shapes = {}
@@ -165,10 +161,20 @@ def top_level_task():
         x_list, y = gen.get_slice(size=args.batch_size, dataframe=True, single=args.single)
         for j, input_feature in enumerate(x_list):
           input_feature.columns = [''] * len(input_feature.columns)
-          store.append('x_{}_{}'.format(partition, j), input_feature.astype('float32'), format='table', data_column=True)
-        store.append('y_{}'.format(partition), y.astype({target: 'float32'}), format='table', data_column=True,
-                     min_itemsize=config_min_itemsize)
-        print('Generating {} dataset. {} / {}'.format(partition, i, gen.steps))
+          store.append(
+              f'x_{partition}_{j}',
+              input_feature.astype('float32'),
+              format='table',
+              data_column=True,
+          )
+        store.append(
+            f'y_{partition}',
+            y.astype({target: 'float32'}),
+            format='table',
+            data_column=True,
+            min_itemsize=config_min_itemsize,
+        )
+        print(f'Generating {partition} dataset. {i} / {gen.steps}')
 
     # save input_features and feature_shapes from loader
     store.put('model', pd.DataFrame())
@@ -176,7 +182,7 @@ def top_level_task():
     store.get_storer('model').attrs.feature_shapes = loader.feature_shapes
 
     store.close()
-    print('Completed generating {}'.format(fname))
+    print(f'Completed generating {fname}')
     return
 
   if args.use_exported_data is None:

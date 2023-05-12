@@ -26,7 +26,7 @@ class Pooling2D(Layer):
                'padding', 'pool_type']
   def __init__(self, pool_size, strides, padding="valid", default_name="pool2d", pool_type=ff.PoolType.POOL_MAX, layer_type="MaxPooling2D", **kwargs):
     super(Pooling2D, self).__init__(default_name, layer_type, **kwargs) 
-    
+
     self.in_channels = 0
     self.out_channels = 0
     assert len(pool_size)==2, "wrong dim of pool_size"
@@ -37,7 +37,7 @@ class Pooling2D(Layer):
       self.padding = (0, 0)
     elif (padding == "same"):
       self.padding = "same"
-    elif (isinstance(padding, list) or isinstance(padding, tuple)):
+    elif isinstance(padding, (list, tuple)):
       assert len(padding)==2, "[Pooling2D]: wrong dim of padding"
       self.padding = tuple(padding)
     else:
@@ -51,8 +51,12 @@ class Pooling2D(Layer):
     assert self.out_channels != 0, " out channels is wrong"
     
   def get_summary(self):
-    summary = "%s%s\t\t%s%s\n"%(self._get_summary_name(), self.output_shape, self.input_shape, self._get_summary_connected_to())
-    return summary
+    return "%s%s\t\t%s%s\n" % (
+        self._get_summary_name(),
+        self.output_shape,
+        self.input_shape,
+        self._get_summary_connected_to(),
+    )
     
   def __call__(self, input_tensor):
     return self._connect_layer_1_input_1_output(input_tensor)
@@ -66,7 +70,7 @@ class Pooling2D(Layer):
     assert input_h != 0, "wrong input_h"
     assert input_w != 0, "wrong input_w"
     assert input_d != 0, "wrong input_d"
-    
+
     #calculate padding for same
     if (self.padding == 'same'):
       if (input_h % self.stride[0] == 0):
@@ -78,8 +82,8 @@ class Pooling2D(Layer):
       else:
         padding_w = max(self.kernel_size[1] - (input_w % self.stride[1]), 0)
       self.padding = (padding_h//2, padding_w//2)
-      fflogger.debug("pool2d same padding %s" %( str(self.padding)))
-      
+      fflogger.debug(f"pool2d same padding {self.padding}")
+
     self.input_shape = (input_b, input_d, input_w, input_h)
     self.in_channels = input_d
     self.out_channels = input_d
@@ -87,7 +91,7 @@ class Pooling2D(Layer):
     output_w = 1 + math.floor((input_w + 2 * self.padding[1] - self.kernel_size[1]) / self.stride[1])
     output_d = self.out_channels
     self.output_shape = (input_b, output_d, output_h, output_w)
-    fflogger.debug("pool2d input %s, output %s" %( str(self.input_shape), str(self.output_shape)))
+    fflogger.debug(f"pool2d input {self.input_shape}, output {self.output_shape}")
     
   def _verify_inout_tensor_shape(self, input_tensor, output_tensor):
     assert input_tensor.num_dims == 4, "[Conv2D]: check input tensor dims"

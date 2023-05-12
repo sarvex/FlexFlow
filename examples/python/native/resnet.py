@@ -31,25 +31,16 @@ def top_level_task():
   t = ffmodel.conv2d(input, 64, 7, 7, 2, 2, 3, 3)
   t = ffmodel.batch_norm(t);
   t = ffmodel.pool2d(t, 3, 3, 2, 2, 1, 1)
-  for i in range(0, 3):
+  for _ in range(0, 3):
     t = BottleneckBlock(ffmodel, t, 64, 1)
   for i in range(0, 4):
-    if (i == 0):
-      stride = 2
-    else:
-      stride = 1
+    stride = 2 if (i == 0) else 1
     t = BottleneckBlock(ffmodel, t, 128, stride)
   for i in range(0, 6):
-    if (i == 0):
-      stride = 2
-    else:
-      stride = 1
+    stride = 2 if (i == 0) else 1
     t = BottleneckBlock(ffmodel, t, 256, stride)
   for i in range(0, 3):
-    if (i == 0):
-      stride = 2
-    else:
-      stride = 1
+    stride = 2 if (i == 0) else 1
     t = BottleneckBlock(ffmodel, t, 512, stride);
   t = ffmodel.pool2d(t, 7, 7, 1, 1, 0, 0, PoolType.POOL_AVG)
   t = ffmodel.flat(t);

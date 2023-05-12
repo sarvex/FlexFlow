@@ -28,8 +28,11 @@ class _Merge(Layer):
    pass
     
   def get_summary(self):
-    summary = "%s%s%s\n"%(self._get_summary_name(), self.output_shape, self._get_summary_connected_to())
-    return summary
+    return "%s%s%s\n" % (
+        self._get_summary_name(),
+        self.output_shape,
+        self._get_summary_connected_to(),
+    )
     
   def __call__(self, input_tensors):
     return self._connect_layer_n_input_1_output(input_tensors)
@@ -55,10 +58,7 @@ class _Merge(Layer):
     pass
     
   def __check_duplications(self, input_tensors):
-    if len(input_tensors) == len(set(input_tensors)):
-      return False
-    else:
-      return True
+    return len(input_tensors) != len(set(input_tensors))
     
 def concatenate(input_tensors, _axis=1):
   return Concatenate(axis=_axis)(input_tensors)
@@ -88,7 +88,7 @@ class Concatenate(_Merge):
       self.output_shape = (output_shape[0], output_shape[1], output_shape[2], output_shape[3])
     else:
       assert 0, "un-supported dims"
-    fflogger.debug("concat output %s" %( str(self.output_shape)))
+    fflogger.debug(f"concat output {str(self.output_shape)}")
     self.input_shape = input_tensors[0].batch_shape
 
 def add(input_tensors):
@@ -99,10 +99,10 @@ class Add(_Merge):
     super(Add, self).__init__("add", "Add", **kwargs) 
     
   def _calculate_inout_shape(self, input_tensors):    
-    assert len(input_tensors) == 2, "check input_tensors"   
+    assert len(input_tensors) == 2, "check input_tensors"
     self.input_shape = input_tensors[0].batch_shape
     self.output_shape = input_tensors[0].batch_shape
-    fflogger.debug("add output %s" %( str(self.output_shape)))
+    fflogger.debug(f"add output {str(self.output_shape)}")
     
 def subtract(input_tensors):
   return Subtract()(input_tensors)
@@ -112,10 +112,10 @@ class Subtract(_Merge):
     super(Subtract, self).__init__("subtract", "Subtract", **kwargs) 
     
   def _calculate_inout_shape(self, input_tensors): 
-    assert len(input_tensors) == 2, "check input_tensors"   
+    assert len(input_tensors) == 2, "check input_tensors"
     self.input_shape = input_tensors[0].batch_shape
     self.output_shape = input_tensors[0].batch_shape
-    fflogger.debug("subtract output %s" %( str(self.output_shape)))
+    fflogger.debug(f"subtract output {str(self.output_shape)}")
 
 def multiply(input_tensors):
   return Multiply()(input_tensors)
@@ -125,27 +125,27 @@ class Multiply(_Merge):
     super(Multiply, self).__init__("multiply", "Multiply", **kwargs) 
     
   def _calculate_inout_shape(self, input_tensors): 
-    assert len(input_tensors) == 2, "check input_tensors"   
+    assert len(input_tensors) == 2, "check input_tensors"
     self.input_shape = input_tensors[0].batch_shape
     self.output_shape = input_tensors[0].batch_shape
-    fflogger.debug("multiply output %s" %( str(self.output_shape)))
+    fflogger.debug(f"multiply output {str(self.output_shape)}")
 
 class Maximum(_Merge):
   def __init__(self, **kwargs):
     super(Maximum, self).__init__("maximum", "Maximum", **kwargs) 
     
   def _calculate_inout_shape(self, input_tensors): 
-    assert len(input_tensors) == 2, "check input_tensors"   
+    assert len(input_tensors) == 2, "check input_tensors"
     self.input_shape = input_tensors[0].batch_shape
     self.output_shape = input_tensors[0].batch_shape
-    fflogger.debug("maximum output %s" %( str(self.output_shape)))
+    fflogger.debug(f"maximum output {str(self.output_shape)}")
 
 class Minimum(_Merge):
   def __init__(self, **kwargs):
     super(Minimum, self).__init__("minimum", "Minimum", **kwargs) 
     
   def _calculate_inout_shape(self, input_tensors): 
-    assert len(input_tensors) == 2, "check input_tensors"   
+    assert len(input_tensors) == 2, "check input_tensors"
     self.input_shape = input_tensors[0].batch_shape
     self.output_shape = input_tensors[0].batch_shape
-    fflogger.debug("minimum output %s" %( str(self.output_shape)))
+    fflogger.debug(f"minimum output {str(self.output_shape)}")

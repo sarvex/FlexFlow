@@ -99,35 +99,35 @@ class BaseModel(object):
       assert 0, 'Unsupported loss'
 
     assert metrics != None, "metrics is None"
-    assert isinstance(metrics, list) == True, 'Metrics should be a list'
+    assert isinstance(metrics, list), 'Metrics should be a list'
     for metric in metrics:
       if metric == 'accuracy':
         self._metrics.append(ff_keras_metrics.Accuracy())
       elif metric == 'categorical_crossentropy':
         self._metrics.append(ff_keras_metrics.CategoricalCrossentropy())
-      elif metric == 'sparse_categorical_crossentropy':
-        self._metrics.append(ff_keras_metrics.SparseCategoricalCrossentropy())
+      elif metric == 'mean_absolute_error':
+        self._metrics.append(ff_keras_metrics.MeanAbsoluteError())
       elif metric == 'mean_squared_error':
         self._metrics.append(ff_keras_metrics.MeanSquaredError())
       elif metric == 'root_mean_squared_error':
         self._metrics.append(ff_keras_metrics.RootMeanSquaredError())
-      elif metric == 'mean_absolute_error':
-        self._metrics.append(ff_keras_metrics.MeanAbsoluteError())
+      elif metric == 'sparse_categorical_crossentropy':
+        self._metrics.append(ff_keras_metrics.SparseCategoricalCrossentropy())
       else:
         assert 0, 'Unsupported metric'
-        
+
     self._ffmodel = ff.FFModel(self._ffconfig)
     self._create_input_tensors()
     self._create_flexflow_layers()
-    
+
     layers = self._ffmodel.get_layers()
     for l in layers:
       print(l, layers[l])
-    
-    if isinstance(optimizer, tf_keras_optimizer.Optimizer) == True:
-      if isinstance(optimizer, tf_keras_optimizer.SGD) == True:
+
+    if isinstance(optimizer, tf_keras_optimizer.Optimizer):
+      if isinstance(optimizer, tf_keras_optimizer.SGD):
         self._ffoptimizer = ff_keras_optimizer.SGD(learning_rate=optimizer.learning_rate.numpy(), momentum=optimizer.momentum.numpy(), nesterov=optimizer.nesterov)
-      elif isinstance(optimizer, tf_keras_optimizer.Adam) == True:
+      elif isinstance(optimizer, tf_keras_optimizer.Adam):
         self._ffoptimizer = ff_keras_optimizer.Adam(learning_rate=optimizer.learning_rate.numpy(), beta_1=optimizer.beta_1.numpy(), beta_2=optimizer.beta_2.numpy(), epsilon=optimizer.epsilon.numpy())
       else:
         assert 0, "Unsupported optimizer"
@@ -142,9 +142,7 @@ class BaseModel(object):
       assert 0, "Unsupported optimizer"
 
     self._create_optimizer()
-    metrics_type = []
-    for metric in self._metrics:
-      metrics_type.append(metric.type)
+    metrics_type = [metric.type for metric in self._metrics]
     self._ffmodel.compile(optimizer=self._ffoptimizer.ffhandle, loss_type=self._loss.type, metrics=metrics_type, comp_mode=comp_mode)
     self._create_label_tensor()
     
@@ -199,10 +197,7 @@ class BaseModel(object):
       assert 0, "use_multiprocessing is not supported"
 
     assert self._output_tensor != None, "tensor is not init"
-    if (isinstance(x, list) == False):
-      input_tensors = [x]
-    else:
-      input_tensors = x
+    input_tensors = [x] if not isinstance(x, list) else x
     label_tensor = y
     self._verify_tensors(input_tensors, label_tensor)
     self._create_data_loaders(input_tensors, label_tensor)
@@ -215,22 +210,21 @@ class BaseModel(object):
     self._label_tensor.ffhandle = label_ffhandle
 
   def _create_input_tensors(self):
-    idx = 0
-    for input_tensor in self._input_tensors:
+    for idx, input_tensor in enumerate(self._input_tensors):
       self._input_tensors[idx].create_ff_tensor(self._ffmodel)
-      idx += 1
       
   def _create_flexflow_layers(self):
     self._my_onnx_model = ONNXModelKeras(self._onnx_model, self._ffconfig, self._ffmodel)
     input_dict = {}
     for input_tensor in self._input_tensors:
-      key = "input_" + str(input_tensor.key)
+      key = f"input_{str(input_tensor.key)}"
       input_dict[key] = input_tensor.ffhandle
     self._output_tensor = self._my_onnx_model.apply(self._ffmodel, input_dict)
     
   def _create_optimizer(self):
     assert self._ffoptimizer != None, "optimizer is not set"
-    if (isinstance(self._ffoptimizer, ff_keras_optimizer.SGD) == True) or (isinstance(self._ffoptimizer, ff_keras_optimizer.Adam) == True):
+    if isinstance(self._ffoptimizer,
+                  (ff_keras_optimizer.SGD, ff_keras_optimizer.Adam)):
       self._ffoptimizer.create_ffhandle(self._ffmodel)
     else:
       assert 0, "unknown optimizer"
@@ -259,12 +253,10 @@ class BaseModel(object):
     assert len(self._input_tensors) != 0, "input_tensor is not set"
     assert self._label_tensor != 0, "label_tensor is not set"
 
-    idx = 0
-    for x_train in x_trains:
+    for idx, x_train in enumerate(x_trains):
       dataloader = self._ffmodel.create_data_loader(self._input_tensors[idx].ffhandle, x_train)
       self._input_dataloaders.append(dataloader)
       self._input_dataloaders_dim.append(len(input_shape))
-      idx += 1
     dataloader = self._ffmodel.create_data_loader(self._label_tensor.ffhandle, y_train)
     self._label_dataloader = dataloader
     self._label_dataloader_dim = len(input_shape)
@@ -282,7 +274,7 @@ class BaseModel(object):
     epoch = 0
     epoch_flag = True
     self.__tracing_id += 1
-    while (epoch < epochs) and (epoch_flag == True):
+    while epoch < epochs and epoch_flag:
       if callbacks != None:
         for callback in callbacks:
           callback.on_epoch_begin(epoch)
@@ -338,8 +330,8 @@ class BaseModel(object):
 class Model(tf_keras_Model):
   def __init__(self, inputs, outputs, name=None):
     super(Model, self).__init__(inputs=inputs, outputs=outputs, name=name)
-    
-    if (isinstance(inputs, dict) == True):
+
+    if isinstance(inputs, dict):
       onnx_model = keras2onnx.convert_keras(self, name)
       self._base_model = BaseModel(inputs=inputs, onnx_model=onnx_model)
 
@@ -382,8 +374,8 @@ class Model(tf_keras_Model):
 class Sequential(tf_keras_Model):
   def __init__(self, inputs, outputs, name=None):
     super(Sequential, self).__init__(inputs=inputs, outputs=outputs, name=name)
-    
-    if (isinstance(inputs, dict) == True):
+
+    if isinstance(inputs, dict):
       onnx_model = keras2onnx.convert_keras(self, name)
       self._base_model = BaseModel(inputs=inputs, onnx_model=onnx_model)
 

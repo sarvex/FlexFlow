@@ -23,21 +23,21 @@ class Tensor(object):
                dtype=None):
 
     self._ffhandle = None
-    if dtype == None or dtype == "float32" or dtype == ff.DataType.DT_FLOAT:
+    if dtype is None or dtype == "float32" or dtype == ff.DataType.DT_FLOAT:
       self.dtype = ff.DataType.DT_FLOAT
-    elif dtype == "float64" or dtype == ff.DataType.DT_DOUBLE:
+    elif dtype in ["float64", ff.DataType.DT_DOUBLE]:
       self.dtype = ff.DataType.DT_DOUBLE
-    elif dtype == "int32" or dtype == ff.DataType.DT_INT32:
+    elif dtype in ["int32", ff.DataType.DT_INT32]:
       self.dtype = ff.DataType.DT_INT32
-    elif dtype == "int64" or dtype == ff.DataType.DT_INT64:
+    elif dtype in ["int64", ff.DataType.DT_INT64]:
       self.dtype = ff.DataType.DT_INT64
     else:
       assert 0, "not supported"
-      
-    if batch_shape != None:
-      self.batch_shape = batch_shape
-    else:
+
+    if batch_shape is None:
       self.batch_shape = (ffconfig.batch_size,) + tuple(shape[1:])
+    else:
+      self.batch_shape = batch_shape
     #print(self.batch_shape)
     self.num_dims = len(self.batch_shape)
     self.key = key
@@ -48,8 +48,9 @@ class Tensor(object):
     
   @ffhandle.setter
   def ffhandle(self, handle):
-    assert isinstance(handle, ff.Tensor) == True, "[Tensor]: ffhandle is not the correct type"
-    assert self._ffhandle == None, "[Tensor]: check handle, already set"
+    assert isinstance(handle,
+                      ff.Tensor), "[Tensor]: ffhandle is not the correct type"
+    assert self._ffhandle is None, "[Tensor]: check handle, already set"
     self._ffhandle = handle
     self.__verify_ffhandle_shape()
     self.__verify_ffhandle_dtype()
@@ -67,7 +68,7 @@ class Tensor(object):
 
   def create_ff_tensor(self, ffmodel):
     assert self.batch_shape[0] != 0, "[Tensor]: batch size is not set"
-    if (self.num_dims == 2 or self.num_dims == 4):
+    if self.num_dims in [2, 4]:
       #print(self.batch_shape, type(self.batch_shape))
       self._ffhandle = ffmodel.create_tensor(self.batch_shape, self.dtype);
     else:

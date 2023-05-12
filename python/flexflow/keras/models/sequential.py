@@ -42,17 +42,17 @@ class Sequential(BaseModel):
     
   def __add_layer(self, layer):
     self._layers.append(layer)
-    assert layer.ffhandle == None, "layer handle is inited"
+    assert layer.ffhandle is None, "layer handle is inited"
     layer.layer_id = self._nb_layers
     self._nb_layers += 1
-    
+
     if layer.layer_id == 0 and len(self._input_layers) == 0:
       assert layer.input_shape != None, "input shape is not set"
       input_tensor = Input(batch_shape=layer.input_shape, dtype="float32")
       self.__add_input(input_tensor)
-      
+
     self._output_tensor = layer(self._output_tensor)
-    
+
     layer.verify_meta_data()
     
   def __add_model(self, model):

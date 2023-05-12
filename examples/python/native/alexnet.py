@@ -84,12 +84,7 @@ def top_level_task():
     run_time = 1e-6 * (ts_end - ts_start)
     print("epochs %d, ELAPSED TIME = %.4fs, THROUGHPUT = %.2f samples/s\n" %
           (epochs, run_time, num_samples * epochs / run_time))
-    perf_metrics = ffmodel.get_perf_metrics()
-
-    return perf_metrics
-    accuracy = perf_metrics.get_accuracy()
-    if accuracy < ModelAccuracy.CIFAR10_ALEXNET.value:
-        assert 0, 'Check Accuracy'
+    return ffmodel.get_perf_metrics()
 
     # conv_2d1 = ffmodel.get_layer_by_id(0)
     # cbias_tensor = conv_2d1.get_input_tensor()

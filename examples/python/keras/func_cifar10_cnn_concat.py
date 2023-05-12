@@ -29,11 +29,17 @@ import argparse
 import gc
   
 def cifar_cnn_sub(input_tensor, name_postfix):
-  name = "conv2d_0_" + str(name_postfix)
+  name = f"conv2d_0_{str(name_postfix)}"
   t1 = Conv2D(filters=32, input_shape=(3,32,32), kernel_size=(3,3), strides=(1,1), padding=(1,1), activation="relu", name=name)(input_tensor)
-  name = "conv2d_1_" + str(name_postfix)
-  ot1 = Conv2D(filters=32, kernel_size=(3,3), strides=(1,1), padding=(1,1), activation="relu", name=name)(t1)
-  return ot1
+  name = f"conv2d_1_{str(name_postfix)}"
+  return Conv2D(
+      filters=32,
+      kernel_size=(3, 3),
+      strides=(1, 1),
+      padding=(1, 1),
+      activation="relu",
+      name=name,
+  )(t1)
     
 def top_level_task():
   num_classes = 10

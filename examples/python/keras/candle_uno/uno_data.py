@@ -119,13 +119,15 @@ def save_combined_dose_response():
 
 def load_combined_dose_response(rename=True):
     df1 = load_single_dose_response(combo_format=True)
-    logger.info('Loaded {} single drug dose response measurements'.format(df1.shape[0]))
+    logger.info(f'Loaded {df1.shape[0]} single drug dose response measurements')
 
     df2 = load_combo_dose_response()
-    logger.info('Loaded {} drug pair dose response measurements'.format(df2.shape[0]))
+    logger.info(f'Loaded {df2.shape[0]} drug pair dose response measurements')
 
     df = pd.concat([df1, df2])
-    logger.info('Combined dose response data contains sources: {}'.format(df['SOURCE'].unique()))
+    logger.info(
+        f"Combined dose response data contains sources: {df['SOURCE'].unique()}"
+    )
 
     if rename:
         df = df.rename(columns={'SOURCE': 'Source', 'CELL': 'Sample',
@@ -203,11 +205,7 @@ def load_combo_dose_response(fraction=True):
     df['DRUG1'] = 'NSC.' + df['NSC1']
     df['DRUG2'] = 'NSC.' + df['NSC2']
 
-    if fraction:
-        df['GROWTH'] = df['PERCENTGROWTH'] / 100
-    else:
-        df['GROWTH'] = df['PERCENTGROWTH']
-
+    df['GROWTH'] = df['PERCENTGROWTH'] / 100 if fraction else df['PERCENTGROWTH']
     df = df[['SOURCE', 'CELL', 'DRUG1', 'DOSE1', 'DRUG2', 'DOSE2', 'GROWTH', 'STUDY']]
 
     return df
@@ -243,10 +241,9 @@ def load_aggregated_single_response(target='AUC', min_r2_fit=0.3, max_ec50_se=3,
         if rename:
             df = df.rename(columns={'SOURCE': 'Source', 'CELL': 'Sample',
                                     'DRUG1': 'Drug1', 'DRUG2': 'Drug2', 'STUDY': 'Study'})
-    else:
-        if rename:
-            df = df.rename(columns={'SOURCE': 'Source', 'CELL': 'Sample',
-                                    'DRUG': 'Drug', 'STUDY': 'Study'})
+    elif rename:
+        df = df.rename(columns={'SOURCE': 'Source', 'CELL': 'Sample',
+                                'DRUG': 'Drug', 'STUDY': 'Study'})
 
     return df
 
@@ -385,8 +382,7 @@ def lookup(df, query, ret, keys, match='match'):
 
 def load_cell_metadata():
     path = get_file(DATA_URL + 'cl_metadata')
-    df = pd.read_csv(path, sep='\t')
-    return df
+    return pd.read_csv(path, sep='\t')
 
 
 def cell_name_to_ids(name, source=None):
@@ -417,7 +413,7 @@ def drug_name_to_ids(name, source=None):
 
 def load_drug_set_descriptors(drug_set='Combined_PubChem', ncols=None, usecols=None,
                               scaling=None, imputing=None, add_prefix=False):
-    path = get_file(DATA_URL + '{}_dragon7_descriptors.tsv'.format(drug_set))
+    path = get_file(DATA_URL + f'{drug_set}_dragon7_descriptors.tsv')
 
     df_cols = pd.read_csv(path, engine='c', sep='\t', nrows=0)
     total = df_cols.shape[1] - 1
@@ -431,7 +427,7 @@ def load_drug_set_descriptors(drug_set='Combined_PubChem', ncols=None, usecols=N
         usecols = np.append([0], np.add(sorted(usecols), 1))
         df_cols = df_cols.iloc[:, usecols]
 
-    dtype_dict = dict((x, np.float32) for x in df_cols.columns[1:])
+    dtype_dict = {x: np.float32 for x in df_cols.columns[1:]}
     df = pd.read_csv(path, engine='c', sep='\t', usecols=usecols, dtype=dtype_dict,
                      na_values=['na', '-', ''])
 
@@ -454,7 +450,7 @@ def load_drug_set_fingerprints(drug_set='Combined_PubChem', ncols=None, usecols=
     usecols_all = usecols
     df_merged = None
     for fp in fps:
-        path = get_file(DATA_URL + '{}_dragon7_{}.tsv'.format(drug_set, fp))
+        path = get_file(DATA_URL + f'{drug_set}_dragon7_{fp}.tsv')
         df_cols = pd.read_csv(path, engine='c', sep='\t', nrows=0, skiprows=1, header=None)
         total = df_cols.shape[1] - 1
         if usecols_all is not None:
@@ -469,12 +465,12 @@ def load_drug_set_fingerprints(drug_set='Combined_PubChem', ncols=None, usecols=
             usecols = np.append([0], np.add(sorted(usecols), 1))
             df_cols = df_cols.iloc[:, usecols]
 
-        dtype_dict = dict((x, np.float32) for x in df_cols.columns[1:])
+        dtype_dict = {x: np.float32 for x in df_cols.columns[1:]}
         df = pd.read_csv(path, engine='c', sep='\t', skiprows=1, header=None,
                          usecols=usecols, dtype=dtype_dict)
-        df.columns = ['{}.{}'.format(fp, x) for x in df.columns]
+        df.columns = [f'{fp}.{x}' for x in df.columns]
 
-        col1 = '{}.0'.format(fp)
+        col1 = f'{fp}.0'
         df1 = pd.DataFrame(df.loc[:, col1])
         df1.rename(columns={col1: 'Drug'}, inplace=True)
 
@@ -543,7 +539,7 @@ def load_cell_rnaseq(ncols=None, scaling='std', imputing='mean', add_prefix=True
         usecols = [0] + [i for i, c in enumerate(df_cols.columns) if with_prefix(c) in feature_subset]
         df_cols = df_cols.iloc[:, usecols]
 
-    dtype_dict = dict((x, np.float32) for x in df_cols.columns[1:])
+    dtype_dict = {x: np.float32 for x in df_cols.columns[1:]}
     df = pd.read_csv(path, engine='c', sep='\t', usecols=usecols, dtype=dtype_dict)
     if 'Cancer_type_id' in df.columns:
         df.drop('Cancer_type_id', axis=1, inplace=True)
@@ -599,8 +595,7 @@ def select_drugs_with_response_range(df_response, lower=0, upper=0, span=0, lowe
         mask &= (df['median'] >= lower_median)
     if upper_median:
         mask &= (df['median'] <= upper_median)
-    df_sub = df[mask]
-    return df_sub
+    return df[mask]
 
 
 def summarize_response_data(df, target=None):
@@ -637,7 +632,7 @@ def dict_compare(d1, d2, ignore=[], expand=False):
     added = d1_keys - d2_keys
     removed = d2_keys - d1_keys
     modified = set({x: (d1[x], d2[x]) for x in intersect_keys if d1[x] != d2[x]})
-    common = set(x for x in intersect_keys if d1[x] == d2[x])
+    common = {x for x in intersect_keys if d1[x] == d2[x]}
     equal = not (added or removed or modified)
     if expand:
         return equal, added, removed, modified, common
@@ -660,7 +655,7 @@ class CombinedDataLoader(object):
 
     def load_from_cache(self, cache, params):
         """ NOTE: How does this function return an error? (False?) -Wozniak """
-        param_fname = '{}.params.json'.format(cache)
+        param_fname = f'{cache}.params.json'
         if not os.path.isfile(param_fname):
             logger.warning('Cache parameter file does not exist: %s', param_fname)
             return False
@@ -677,7 +672,7 @@ class CombinedDataLoader(object):
             logger.warning('\nRemove %s to rebuild data cache.\n', param_fname)
             raise ValueError('Could not load from a cache with incompatible keys:', diffs)
         else:
-            fname = '{}.pkl'.format(cache)
+            fname = f'{cache}.pkl'
             if not os.path.isfile(fname):
                 logger.warning('Cache file does not exist: %s', fname)
                 return False
@@ -697,10 +692,10 @@ class CombinedDataLoader(object):
         if not os.path.exists(dirname):
             logger.debug('Creating directory for cache: %s', dirname)
             os.mkdir(dirname)
-        param_fname = '{}.params.json'.format(cache)
+        param_fname = f'{cache}.params.json'
         with open(param_fname, 'w') as param_file:
             json.dump(params, param_file, sort_keys=True)
-        fname = '{}.pkl'.format(cache)
+        fname = f'{cache}.pkl'
         with open(fname, 'wb') as f:
             pickle.dump(self, f, pickle.HIGHEST_PROTOCOL)
         logger.info('Saved data to cache: %s', fname)
@@ -825,7 +820,7 @@ class CombinedDataLoader(object):
                 input_features[feature_name] = feature_type
                 feature_shapes[feature_type] = (df_drug.shape[1] - 1,)
 
-        input_dim = sum([np.prod(feature_shapes[x]) for x in input_features.values()])
+        input_dim = sum(np.prod(feature_shapes[x]) for x in input_features.values())
 
         self.input_features = input_features
         self.feature_shapes = feature_shapes
@@ -833,8 +828,8 @@ class CombinedDataLoader(object):
 
         logger.info('Input features shapes:')
         for k, v in self.input_features.items():
-            logger.info('  {}: {}'.format(k, self.feature_shapes[v]))
-        logger.info('Total input dimensions: {}'.format(self.input_dim))
+            logger.info(f'  {k}: {self.feature_shapes[v]}')
+        logger.info(f'Total input dimensions: {self.input_dim}')
 
     def load(self, cache=None, ncols=None, scaling='std', dropna=None,
              agg_dose=None, embed_feature_source=True, encode_response_source=True,
@@ -870,7 +865,10 @@ class CombinedDataLoader(object):
                 if '/model' in store.keys():
                     self.input_features = store.get_storer('model').attrs.input_features
                     self.feature_shapes = store.get_storer('model').attrs.feature_shapes
-                    self.input_dim = sum([np.prod(self.feature_shapes[x]) for x in self.input_features.values()])
+                    self.input_dim = sum(
+                        np.prod(self.feature_shapes[x])
+                        for x in self.input_features.values()
+                    )
                     self.test_sep_sources = []
                     return
                 else:
@@ -919,7 +917,7 @@ class CombinedDataLoader(object):
 
         for fea in cell_features:
             fea = fea.lower()
-            if fea == 'rnaseq' or fea == 'expression':
+            if fea in ['rnaseq', 'expression']:
                 df_cell_rnaseq = load_cell_rnaseq(ncols=ncols, scaling=scaling, use_landmark_genes=use_landmark_genes, use_filtered_genes=use_filtered_genes, feature_subset=cell_feature_subset, preprocess_rnaseq=preprocess_rnaseq, embed_feature_source=embed_feature_source)
 
         for fea in drug_features:
@@ -1015,7 +1013,7 @@ class DataFeeder(keras.utils.data_utils.Sequence):
         self.store = pd.HDFStore(filename, mode='r')
         self.input_size = len(list(filter(lambda x: x.startswith('/x_train'), self.store.keys())))
         try:
-            y = self.store.select('y_{}'.format(self.partition))
+            y = self.store.select(f'y_{self.partition}')
             self.index = y.index
         except KeyError:
             self.index = []
@@ -1037,14 +1035,18 @@ class DataFeeder(keras.utils.data_utils.Sequence):
         start = self.index_map[idx] * self.batch_size
         stop = (self.index_map[idx] + 1) * self.batch_size
         x = [self.store.select('x_{0}_{1}'.format(self.partition, i), start=start, stop=stop) for i in range(self.input_size)]
-        y = self.store.select('y_{}'.format(self.partition), start=start, stop=stop)[self.target]
+        y = self.store.select(f'y_{self.partition}', start=start, stop=stop)[
+            self.target
+        ]
         return x, y
 
     def getall(self):
         start = 0
         stop = self.size
         x = [self.store.select('x_{0}_{1}'.format(self.partition, i), start=start, stop=stop) for i in range(self.input_size)]
-        y = self.store.select('y_{}'.format(self.partition), start=start, stop=stop)[self.target]
+        y = self.store.select(f'y_{self.partition}', start=start, stop=stop)[
+            self.target
+        ]
         return x, y
 
     def reset(self):
@@ -1055,14 +1057,14 @@ class DataFeeder(keras.utils.data_utils.Sequence):
     def get_response(self, copy=False):
         if self.shuffle:
             self.index = [item for step in range(self.steps) for item in range(self.index_map[step] * self.batch_size, (self.index_map[step] + 1) * self.batch_size)]
-            df = self.store.get('y_{}'.format(self.partition)).iloc[self.index, :]
+            df = self.store.get(f'y_{self.partition}').iloc[self.index, :]
         else:
-            df = self.store.get('y_{}'.format(self.partition))
+            df = self.store.get(f'y_{self.partition}')
 
         if self.agg_dose is None:
-            df['Dose1'] = self.store.get('x_{}_0'.format(self.partition)).iloc[self.index, :]
+            df['Dose1'] = self.store.get(f'x_{self.partition}_0').iloc[self.index, :]
             if not self.single:
-                df['Dose2'] = self.store.get('x_{}_1'.format(self.partition)).iloc[self.index, :]
+                df['Dose2'] = self.store.get(f'x_{self.partition}_1').iloc[self.index, :]
         return df.copy() if copy else df
 
     def close(self):

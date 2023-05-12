@@ -115,14 +115,10 @@ class Layer(object):
     bias_parameter.set_weights(ffmodel, bias)
     
   def _get_summary_name(self):
-    str_name = "{0:25}".format(self._name + " (" + self._layer_type + ")")
-    return str_name
+    return "{0:25}".format(f"{self._name} ({self._layer_type})")
     
   def _get_summary_connected_to(self):
-    str_name = ""
-    for layer in self.prev_layers:
-      str_name += "\t%s"%(layer.name)
-    return str_name
+    return "".join("\t%s"%(layer.name) for layer in self.prev_layers)
     
   def _connect_layer_1_input_1_output(self, input_tensor):
     assert self._initialized == False, "[Layer]: layer is initialized, do not reuse the layer"

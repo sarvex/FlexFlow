@@ -45,23 +45,23 @@ class Dense(Layer):
       assert 0, "kernel_constraint is not supported"
     if bias_constraint != None:
       assert 0, "bias_constraint is not supported"
-    
+
     super(Dense, self).__init__('dense', 'Dense', **kwargs) 
-    
+
     if kernel_initializer == "glorot_uniform":
       self.kernel_initializer = DefaultInitializer()
-    elif isinstance(kernel_initializer, Initializer) == True:
+    elif isinstance(kernel_initializer, Initializer):
       self.kernel_initializer = kernel_initializer
     else:
       assert 0, "[Dense]: unknown kernel_initializer"
-      
+
     if bias_initializer == "zeros":
       self.bias_initializer = DefaultInitializer()
-    elif isinstance(bias_initializer, Initializer) == True:
+    elif isinstance(bias_initializer, Initializer):
       self.bias_initializer = bias_initializer
     else:
       assert 0, "[Dense]: unknown bias_initializer"
-    
+
     self.in_channels = 0
     self.out_channels = units
     self.use_bias = use_bias
@@ -72,12 +72,12 @@ class Dense(Layer):
       elif len(input_shape) == 1:
         self.in_channels = input_shape[0]
         self.input_shape = (0, input_shape[0])
-    if (activation == None):
-      self.activation = ff.ActiMode.AC_MODE_NONE
-    elif(activation =="relu"):
+    if activation == "relu":
       self.activation = ff.ActiMode.AC_MODE_RELU
-    elif(activation =="sigmoid"):
+    elif activation == "sigmoid":
       self.activation = ff.ActiMode.AC_MODE_SIGMOID
+    elif activation is None:
+      self.activation = ff.ActiMode.AC_MODE_NONE
     else:
       assert 0, "activation is not supported"
     
@@ -88,8 +88,12 @@ class Dense(Layer):
     assert self.out_channels != 0, " out channels is wrong"
     
   def get_summary(self):
-    summary = "%s%s\t\t%s%s\n"%(self._get_summary_name(), self.output_shape, self.input_shape, self._get_summary_connected_to())
-    return summary
+    return "%s%s\t\t%s%s\n" % (
+        self._get_summary_name(),
+        self.output_shape,
+        self.input_shape,
+        self._get_summary_connected_to(),
+    )
     
   def get_weights(self, ffmodel):
     return self._get_weights(ffmodel)
@@ -110,7 +114,7 @@ class Dense(Layer):
     self.output_shape = (input_b, self.out_channels)
     self.input_shape = (input_b, in_dim)
     self.in_channels = in_dim
-    fflogger.debug("dense input %s, output %s" %( str(self.input_shape), str(self.output_shape)))
+    fflogger.debug(f"dense input {self.input_shape}, output {self.output_shape}")
     
   def _verify_inout_tensor_shape(self, input_tensor, output_tensor):
     assert input_tensor.num_dims == 2, "[Dense]: check input tensor dims"
@@ -132,8 +136,12 @@ class Flatten(Layer):
     assert self.output_shape != (0, 0), "output shape is wrong"
     
   def get_summary(self):
-    summary = "%s%s\t\t%s%s\n"%(self._get_summary_name(), self.output_shape, self.input_shape, self._get_summary_connected_to())
-    return summary
+    return "%s%s\t\t%s%s\n" % (
+        self._get_summary_name(),
+        self.output_shape,
+        self.input_shape,
+        self._get_summary_connected_to(),
+    )
     
   def __call__(self, input_tensor):    
     return self._connect_layer_1_input_1_output(input_tensor)
@@ -145,7 +153,8 @@ class Flatten(Layer):
     for i in range(1, len(input_shape)):
       flat_size *= input_shape[i]
     self.output_shape = (input_shape[0], flat_size)
-    fflogger.debug("flat input %s, output %s" %( str(self.input_shape), str(self.output_shape)))
+    fflogger.debug(
+        f"flat input {str(self.input_shape)}, output {self.output_shape}")
     
   def _verify_inout_tensor_shape(self, input_tensor, output_tensor):
     assert input_tensor.num_dims == len(self.input_shape), "[Flatten]: check input tensor dims"
@@ -181,8 +190,12 @@ class Embedding(Layer):
     pass
     
   def get_summary(self):
-    summary = "%s%s\t\t%s%s\n"%(self._get_summary_name(), self.output_shape, self.input_shape, self._get_summary_connected_to())
-    return summary
+    return "%s%s\t\t%s%s\n" % (
+        self._get_summary_name(),
+        self.output_shape,
+        self.input_shape,
+        self._get_summary_connected_to(),
+    )
     
   def __call__(self, input_tensor):
     return self._connect_layer_1_input_1_output(input_tensor)
@@ -195,7 +208,8 @@ class Embedding(Layer):
     assert self.input_length == in_dim, "wrong input_w"
     self.output_shape = (input_b, self.out_channels)
     self.input_shape = (input_b, self.input_length)
-    fflogger.debug("embedding input %s, output %s" %( str(self.input_shape), str(self.output_shape)))
+    fflogger.debug(
+        f"embedding input {self.input_shape}, output {self.output_shape}")
     
   def _verify_inout_tensor_shape(self, input_tensor, output_tensor):
     assert input_tensor.num_dims == 2, "[Embedding]: check input tensor dims"
@@ -209,19 +223,23 @@ class Embedding(Layer):
 class Activation(Layer):
   def __init__(self, activation=None, **kwargs):
     
-    if (activation == 'softmax') or (activation == 'relu') or (activation == 'sigmoid') or (activation == 'tanh') or (activation == 'elu'):
+    if activation in ['softmax', 'relu', 'sigmoid', 'tanh', 'elu']:
       self.activation = activation
     else:
       assert 0, '[Activation]: unsupported activation'
-      
+
     super(Activation, self).__init__(self.activation, 'Activation', **kwargs) 
       
   def verify_meta_data(self):
     pass
     
   def get_summary(self):
-    summary = "%s%s\t\t%s%s\n"%(self._get_summary_name(), self.output_shape, self.input_shape, self._get_summary_connected_to())
-    return summary
+    return "%s%s\t\t%s%s\n" % (
+        self._get_summary_name(),
+        self.output_shape,
+        self.input_shape,
+        self._get_summary_connected_to(),
+    )
     
   def __call__(self, input_tensor):
     return self._connect_layer_1_input_1_output(input_tensor)
@@ -242,18 +260,22 @@ class Dropout(Layer):
       assert 0, "noise_shape is not supported"
     self.rate = rate
     self.noise_shape = noise_shape
-    if seed == None:
+    if seed is None:
       _seed = 0
     self.seed = _seed
-      
+
     super(Dropout, self).__init__('dropout', 'Dropout', **kwargs) 
       
   def verify_meta_data(self):
     pass
     
   def get_summary(self):
-    summary = "%s%s\t\t%s%s\n"%(self._get_summary_name(), self.output_shape, self.input_shape, self._get_summary_connected_to())
-    return summary
+    return "%s%s\t\t%s%s\n" % (
+        self._get_summary_name(),
+        self.output_shape,
+        self.input_shape,
+        self._get_summary_connected_to(),
+    )
     
   def __call__(self, input_tensor):
     return self._connect_layer_1_input_1_output(input_tensor)
@@ -282,8 +304,12 @@ class Reshape(Layer):
     pass
     
   def get_summary(self):
-    summary = "%s%s\t\t%s%s\n"%(self._get_summary_name(), self.output_shape, self.input_shape, self._get_summary_connected_to())
-    return summary
+    return "%s%s\t\t%s%s\n" % (
+        self._get_summary_name(),
+        self.output_shape,
+        self.input_shape,
+        self._get_summary_connected_to(),
+    )
     
   def __call__(self, input_tensor):
     return self._connect_layer_1_input_1_output(input_tensor)
@@ -313,8 +339,12 @@ class Permute(Layer):
     pass
 
   def get_summary(self):
-    summary = "%s%s\t\t%s%s\n"%(self._get_summary_name(), self.output_shape, self.input_shape, self._get_summary_connected_to())
-    return summary
+    return "%s%s\t\t%s%s\n" % (
+        self._get_summary_name(),
+        self.output_shape,
+        self.input_shape,
+        self._get_summary_connected_to(),
+    )
 
   def __call__(self, input_tensor):
     return self._connect_layer_1_input_1_output(input_tensor)

@@ -46,7 +46,7 @@ class FlexFlowKernelNoCR(IPythonKernel):
         super().__init__(**kwargs)
 
     def _set_stdout(self):
-        assert(self.__stdout == None), "stdout should be None"
+        assert self.__stdout is None, "stdout should be None"
         self.__stdout = sys.stdout
         sys.stdout = open('/dev/stdout', 'w')
 

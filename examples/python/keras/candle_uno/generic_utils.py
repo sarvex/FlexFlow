@@ -15,22 +15,19 @@ def get_from_module(identifier, module_params, module_name,
     if isinstance(identifier, six.string_types):
         res = module_params.get(identifier)
         if not res:
-            raise Exception('Invalid ' + str(module_name) + ': ' +
-                            str(identifier))
+            raise Exception(f'Invalid {str(module_name)}: {str(identifier)}')
         if instantiate and not kwargs:
             return res()
-        elif instantiate and kwargs:
+        elif instantiate:
             return res(**kwargs)
         else:
             return res
     elif type(identifier) is dict:
         name = identifier.pop('name')
-        res = module_params.get(name)
-        if res:
+        if res := module_params.get(name):
             return res(**identifier)
         else:
-            raise Exception('Invalid ' + str(module_name) + ': ' +
-                            str(identifier))
+            raise Exception(f'Invalid {str(module_name)}: {str(identifier)}')
     return identifier
 
 
@@ -66,7 +63,7 @@ def func_reconstruct_closure(values):
     nums = range(len(values))
     src = ["def func(arg):"]
     src += ["  _%d = arg[%d]" % (n, n) for n in nums]
-    src += ["  return lambda:(%s)" % ','.join(["_%d" % n for n in nums]), ""]
+    src += [f"""  return lambda:({','.join(["_%d" % n for n in nums])})""", ""]
     src = '\n'.join(src)
     try:
         exec(src, globals())
@@ -132,19 +129,13 @@ class Progbar(object):
             prog_width = int(self.width * prog)
             if prog_width > 0:
                 bar += ('=' * (prog_width-1))
-                if current < self.target:
-                    bar += '>'
-                else:
-                    bar += '='
+                bar += '>' if current < self.target else '='
             bar += ('.' * (self.width - prog_width))
             bar += ']'
             sys.stdout.write(bar)
             self.total_width = len(bar)
 
-            if current:
-                time_per_unit = (now - self.start) / current
-            else:
-                time_per_unit = 0
+            time_per_unit = (now - self.start) / current if current else 0
             eta = time_per_unit * (self.target - current)
             info = ''
             if current < self.target:
@@ -152,15 +143,12 @@ class Progbar(object):
             else:
                 info += ' - %ds' % (now - self.start)
             for k in self.unique_values:
-                info += ' - %s:' % k
+                info += f' - {k}:'
                 if type(self.sum_values[k]) is list:
                     avg = self.sum_values[k][0] / max(1, self.sum_values[k][1])
-                    if abs(avg) > 1e-3:
-                        info += ' %.4f' % avg
-                    else:
-                        info += ' %.4e' % avg
+                    info += ' %.4f' % avg if abs(avg) > 1e-3 else ' %.4e' % avg
                 else:
-                    info += ' %s' % self.sum_values[k]
+                    info += f' {self.sum_values[k]}'
 
             self.total_width += len(info)
             if prev_total_width > self.total_width:
@@ -172,17 +160,13 @@ class Progbar(object):
             if current >= self.target:
                 sys.stdout.write("\n")
 
-        if self.verbose == 2:
-            if current >= self.target:
-                info = '%ds' % (now - self.start)
-                for k in self.unique_values:
-                    info += ' - %s:' % k
-                    avg = self.sum_values[k][0] / max(1, self.sum_values[k][1])
-                    if avg > 1e-3:
-                        info += ' %.4f' % avg
-                    else:
-                        info += ' %.4e' % avg
-                sys.stdout.write(info + "\n")
+        if self.verbose == 2 and current >= self.target:
+            info = '%ds' % (now - self.start)
+            for k in self.unique_values:
+                info += f' - {k}:'
+                avg = self.sum_values[k][0] / max(1, self.sum_values[k][1])
+                info += ' %.4f' % avg if avg > 1e-3 else ' %.4e' % avg
+            sys.stdout.write(info + "\n")
 
         self.last_update = now
 

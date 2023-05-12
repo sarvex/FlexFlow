@@ -8,7 +8,10 @@ def top_level_task():
   neighbors = [[[0], [5], [3], [3], [7], [9]]]
   neighbors = np.array(neighbors).repeat(bs, 0).repeat(5, 2)
   print(neighbors.shape)
-  x = np.array([[[0.01 for i in range(5)] for j in range(16)] for k in range(bs)], np.single)
+  x = np.array(
+      [[[0.01 for _ in range(5)] for _ in range(16)] for _ in range(bs)],
+      np.single,
+  )
   print(x)
   input = ffmodel.create_tensor([bs, 16, 5], DataType.DT_FLOAT)
   index = ffmodel.create_tensor([bs, 6, 5], DataType.DT_INT32)
